@@ -23,10 +23,6 @@ app = dash.get_app()
 server = app.server
 
 layout = html.Div([
-            html.Div(id='output-provider'),
-            html.Div(id="camera-start-dummy", style={"display": "none"}),
-            html.Div(id="capture-dummy", style={"display": "none"}),
-            
             html.Hr(),
             dcc.Graph(id = 'raw-camera'),
             html.Hr(),

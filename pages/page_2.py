@@ -116,7 +116,7 @@ def mutually_exclusive_selection(all_n_clicks, all_ids):
     Input("capture-dummy", "children"),
     Input("delete-selected-btn", "n_clicks"),
     State({"type": "clickable-image", "index": ALL}, "n_clicks"),
-    State({"type": "clickable-image", "index": ALL}, "id"),
+    State({"type": "clickable-image", "index": ALL}, "id")
 )
 def manage_gallery(capture_trigger, delete_clicks, all_n_clicks, all_ids):
     triggered_id = ctx.triggered_id
@@ -150,7 +150,7 @@ def manage_gallery(capture_trigger, delete_clicks, all_n_clicks, all_ids):
     return [render_tile(img) for img in images]
 
 @app.callback(
-    Output("_pages_location", "pathname", allow_duplicate=True),             # Redirects browser to page 3
+    Output("_pages_location", "pathname", allow_duplicate=True),
     Input('current-page-store','data'),
     State({"type": "clickable-image", "index": ALL}, "n_clicks"), 
     State({"type": "clickable-image", "index": ALL}, "id"),
@@ -159,7 +159,7 @@ def manage_gallery(capture_trigger, delete_clicks, all_n_clicks, all_ids):
 def processing_redirect(data, all_n_clicks, all_ids):
     if not all_ids or not all_n_clicks or all_ids is None:
         raise PreventUpdate
-    
+        
     if len(all_ids) == 0 or len(all_n_clicks) == 0:
         raise PreventUpdate
 
@@ -170,14 +170,11 @@ def processing_redirect(data, all_n_clicks, all_ids):
     ]
 
     if not selected_ids:
-        # No image selected, don't redirect
         return dash.no_update
         
     if len(selected_ids) > 1:
-        # Alert user if they selected more than one image
         return dash.no_update
     
-    # Exactly 1 image is selected! Pull it and process it into session memory
     imgs = session.get("saved_images", [])
     selected_id = selected_ids[0]
     
@@ -190,15 +187,12 @@ def processing_redirect(data, all_n_clicks, all_ids):
     if not str_image:
         return dash.no_update
     
-    # Process Base64 string to a Numpy array
     png_base64 = str_image.strip().replace("data:image/png;base64,", "")
     image_bytes = base64.b64decode(png_base64)
     img_file = Image.open(BytesIO(image_bytes))
     raw_image_data = np.array(img_file, dtype=np.uint8)
 
-    # Save globally to the session cache
     session["current_raw_image"] = raw_image_data
     session.modified = True
     
-    # Success! Tell Dash to change pages to Page 3
     return "/page_3"
