@@ -114,15 +114,13 @@ def mutually_exclusive_selection(all_n_clicks, all_ids):
 @app.callback(
     Output("gallery", "children"),
     Input("capture-dummy", "children"),
+    Input("gallery", "id"),
     Input("delete-selected-btn", "n_clicks"),
     State({"type": "clickable-image", "index": ALL}, "n_clicks"),
     State({"type": "clickable-image", "index": ALL}, "id")
 )
-def manage_gallery(capture_trigger, delete_clicks, all_n_clicks, all_ids):
+def manage_gallery(gallery_init, capture_trigger, delete_clicks, all_n_clicks, all_ids):
     triggered_id = ctx.triggered_id
-
-    if not triggered_id or ctx.triggered is None:
-        raise PreventUpdate
 
     print(f"Triggered by: {triggered_id}")
 
