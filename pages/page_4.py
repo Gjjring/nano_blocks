@@ -71,23 +71,42 @@ layout = html.Div([
 ])
 
 
-@app.callback(Output(component_id='hue_slider', component_property= 'value'),
-              Input('threshold_color','data'))
-def update_hue_threshold(target_color):
-    if not target_color or target_color is None:
-        raise PreventUpdate
-    if len(target_color) == 0:
-        raise PreventUpdate()
-    if isinstance(target_color, (list, tuple, np.ndarray)):
-        if len(target_color) == 0 or any(val is None for val in target_color):
-            raise PreventUpdate
-    if target_color == [None] or target_color == "None":
-        raise PreventUpdate
+@app.callback(
+    Output('hue_slider', 'value'),
+    Output('saturation_slider', 'value'),
+    Output('value_slider', 'value'),
+    Input('threshold_color', 'data'),
+    Input('hue_slider', 'id') 
+)
+def initialize_or_restore_sliders(target_color, page_init):
+    active_img_id = session.get("active_image_id", None)
+    last_img_id = session.get("slider_last_image_id", None)
     
-    hsv_target_color = ski.color.rgb2hsv(np.array(target_color, dtype=np.uint8))
-    lower_hue_bound = np.clip(hsv_target_color[0]-0.15, 0.0, 1.0)
-    upper_hue_bound = np.clip(hsv_target_color[0]+0.15, 0.0, 1.0)
-    return [lower_hue_bound, upper_hue_bound]
+    default_hue = [0.4, 0.5]
+    default_sat = [0.5, 1.0]
+    default_val = [0.1, 1.0]
+
+    if target_color and target_color != "None" and not any(val is None for val in target_color if isinstance(target_color, list)):
+        try:
+            hsv_target_color = ski.color.rgb2hsv(np.array(target_color, dtype=np.uint8))
+            lower_hue_bound = float(np.clip(hsv_target_color[0] - 0.15, 0.0, 1.0))
+            upper_hue_bound = float(np.clip(hsv_target_color[0] + 0.15, 0.0, 1.0))
+            default_hue = [lower_hue_bound, upper_hue_bound]
+        except:
+            pass
+
+    if active_img_id == last_img_id and last_img_id is not None:
+        hue = session.get("slider_hue", default_hue)
+        sat = session.get("slider_sat", default_sat)
+        val = session.get("slider_val", default_val)
+        return hue, sat, val
+    else:
+        session["slider_last_image_id"] = active_img_id
+        session["slider_hue"] = default_hue
+        session["slider_sat"] = default_sat
+        session["slider_val"] = default_val
+        session.modified = True
+        return default_hue, default_sat, default_val
 
 
 
@@ -95,16 +114,16 @@ def update_hue_threshold(target_color):
               Input('hue_slider', 'value'), 
               Input('saturation_slider', 'value'),
               Input('value_slider', 'value'))
-def make_threshold_image(#n_clicks,
-                          hue_range, saturation_range, value_range):
-    #if n_clicks is None:
-    #    raise PreventUpdate()
-    #else:
+def make_threshold_image(hue_range, saturation_range, value_range):
     try:
         img_data = session["current_raw_image"]
     except:
         raise PreventUpdate()
     
+    session["slider_hue"] = hue_range
+    session["slider_sat"] = saturation_range
+    session["slider_val"] = value_range
+    session.modified = True
         
     print("img data shape: {}".format(img_data.shape))
     for ii in range(4):
@@ -143,3 +162,4 @@ def make_threshold_image(#n_clicks,
     fig.update_yaxes(showticklabels=False)
     return fig
 
+app.callback

@@ -71,7 +71,6 @@ app.layout = html.Div(id = 'site', children = [
 
 ])
 
-
 @app.callback(
     Output("_pages_location", "pathname", allow_duplicate=True), 
     Output("current-page-store", "data"),   
@@ -94,14 +93,8 @@ def sync_navigation(prev_clicks, next_clicks, tab_value, current_page, blocked_t
         current_page += 1
     elif triggered_id == 'btn-prev' and current_page > 1:
         current_page -= 1
-
-
     elif triggered_id == "page-tabs":
-        requested_page = int(tab_value)
-        if not blocked_tabs:
-            current_page = current_page 
-        else:
-            print("how did you get this?")
+        current_page = int(tab_value)
     
     if current_page == 1:
         target_path = "/"
@@ -111,9 +104,25 @@ def sync_navigation(prev_clicks, next_clicks, tab_value, current_page, blocked_t
     indicator_text = f"Page {current_page} of 5"
     disable_prev = (current_page == 1)
     disable_next = (current_page == 5)
-    update_tab_value = str(current_page)
+ 
+    if current_page == 2:
+        disable_next = True
 
+    update_tab_value = str(current_page)
     return target_path, current_page, update_tab_value, indicator_text, disable_prev, disable_next, blocked_tabs
+
+@app.callback(
+    Output("btn-next", "disabled", allow_duplicate=True),
+    Input("gallery-selection-status", "data"),
+    State("current-page-store", "data"),
+    prevent_initial_call=True,
+    suppress_callback_exceptions=True
+)
+def update_next_button_from_gallery(gallery_has_selection, current_page):
+    if current_page == 2:
+        return not gallery_has_selection
+    raise PreventUpdate
+
 
 @app.callback(
     Output("page-tabs", "style"),
@@ -127,6 +136,7 @@ def handle_visual_tab_lock(blocked_tabs):
             "transition": "all 0.3s ease"
         }
     return {"pointerEvents": "auto", "opacity": "1.0"}
+
 
 app.clientside_callback(
     """
@@ -144,21 +154,6 @@ app.clientside_callback(
     Input('url', 'pathname'),
     State('initial-load-detector', 'data'),
 )
-
-#def order_lexicographically(points, start=0.0, return_sort_indices=False):
-#    angle = np.angle( (points[:,0]+1j*points[:,1])*np.exp(1j*(np.pi+1e-3+start)))
-#    angle = np.round(angle, 3)
-#    radius = np.linalg.norm(points, axis=1)
-#    angle[np.isclose(radius, 0.)] = -np.pi
-#    sort_indices = np.lexsort((radius, angle))
-#    
-#    all_data = np.round(np.vstack([points.T, angle, radius]).T, 3)
-#   
-#    if return_sort_indices:
-#        return points[sort_indices, :], sort_indices
-#    else:
-#        return points[sort_indices, :]
-
 
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port=8050)

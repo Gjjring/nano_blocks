@@ -79,7 +79,7 @@ def upload_image():
             "timestamp": current_time.isoformat()
         })
         session["saved_images"] = stored
-        session.modified = True       # VERY important: tells Flask the session changed
+        session.modified = True
     except Exception as exp:
         print(str(exp))
         return jsonify({"message": f"{str(exp)}"}), 400
