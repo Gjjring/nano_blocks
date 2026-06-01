@@ -4,8 +4,21 @@
     src: url("./Roboto-VariableFont_wdth,wght.ttf") format("truetype");
 }
 
-body{
+*{
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+    width: 100%;
+}
+
+body {
+    height: 100%;
+    width: 100%;
+    background-color: #fefefe;
     font-family: "Roboto", sans-serif;
+    margin: 0;
 }
 
 h3{
@@ -22,46 +35,53 @@ button{
     font-size: 18px;
 }
 
-.site{
+
+
+#site{
     display: flex;
     flex-direction: column;
+    padding: 10px;
     height: 100vh;
-    width: 100vw;
     overflow: hidden;
 }
 
-.content{
+#content{
     display: flex;
-    flex: 1;
     flex-direction: column;
+    flex-grow: 1;
+    min-height: 0;
+    height: auto;
 }
 
-.page-tabs{
+#page-tabs{
     font-size: 18px;
-    width: inherit;
+    width: 100%;
+    flex-shrink: 0;
 }
 
-.content-page{
-    flex: 1;
+#content-page{
+    flex-grow: 1;
     padding: 20px;
     overflow-y: auto;
-    width: inherit;
+    width: 100%;
 }
 
-.navigation{
+#navigation{
     display: flex;
     align-items: center;
-    justify-content: center;
     border-top: 1px solid black;
-    width: inherit;
-    height: 60px;
+    width: 100%;
+    bottom: 0px;
+    height: calc(40px + 5%);
+    flex-shrink: 0;
 }
 
-.spacer{
+#page-indicator{
     flex-grow: 1;
+    text-align: center;
 }
 
-#navBtn{
+.navBtn{
     font-size: 24px;
-    flex-grow: 0;
+    width: 25vh;
 }
