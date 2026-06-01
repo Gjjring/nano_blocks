@@ -25,11 +25,35 @@ server = app.server
 layout = html.Div([
     html.H3("Camera Stream"),
 
-            # Video element that clientside JS will attach to
-            html.Video(id="video", width="640", height="480", autoPlay=True,
+            html.Div([
+                html.Video(id="video", width="640", height="480", autoPlay=True,
                        style={"border": "1px solid black"}),
 
-            html.Br(),
+                html.Div(id="camera-flash", style={
+                "position": "absolute",
+                "top": "0", "left": "0", "width": "100%", "height": "100%",
+                "backgroundColor": "white",
+                "opacity": "0",
+                "pointerEvents": "none",
+                "transition": "opacity 0.1s ease-out"
+                })
+            ], style={"position": "relative", "display": "inline-block"}),
+
+            html.Div([
+                html.Img(id="capture-preview", style={
+                    "width": "150px", 
+                    "height": "112px", 
+                    "objectFit": "cover",
+                    "border": "2px solid #fff",
+                    "boxShadow": "0 0 8px rgba(0,0,0,0.3)",
+                    "opacity": "0",
+                    "transition": "opacity 0.3s ease-in-out, transform 0.3s ease-in-out",
+                    "transform": "scale(0.8)",
+                    "marginLeft": "15px",
+                    "verticalAlign": "top"
+                })
+            ], style={"display": "inline-block"}),
+        
             
             html.Button("Capture", id="capture-btn", n_clicks=0),
 ])
@@ -88,3 +112,51 @@ def upload_image():
     stored = session.get("saved_images", [])
     print(f"N stored images: {len(stored)}")
     return jsonify({"message": f"Image saved as {id_val}"})
+
+
+
+@app.callback(
+    Output("capture-preview", "src"),
+    Input("capture-dummy", "children"),
+    prevent_initial_call=True
+)
+def update_preview_src(capture_trigger):
+    if not capture_trigger or capture_trigger == 0:
+        raise PreventUpdate
+
+    images = session.get("saved_images", [])
+    if not images:
+        raise PreventUpdate
+        
+    return images[-1]["image"]
+
+
+app.clientside_callback(
+    """
+    function(img_src) {
+        // Ignorieren, wenn beim Laden noch kein Bild da ist
+        if (!img_src) {
+            return window.dash_clientside.no_update;
+        }
+        
+        const previewImg = document.getElementById('capture-preview');
+        if (previewImg) {
+            // 1. Sofort sichtbar machen und reinskalieren
+            previewImg.style.opacity = '1';
+            previewImg.style.transform = 'scale(1.0)';
+            
+            // 2. Nach 1000ms (1 Sekunde) elegant wieder ausblenden
+            setTimeout(() => {
+                previewImg.style.opacity = '0';
+                previewImg.style.transform = 'scale(0.8)';
+            }, 1000);
+        }
+        
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("capture-preview", "id"),
+    Input("capture-preview", "src"), 
+    prevent_initial_call=True
+)
+

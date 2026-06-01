@@ -1,28 +1,29 @@
 window.dash_clientside = Object.assign({}, window.dash_clientside, {
     camera_namespace: {
         streamCamera: function(tab_value) {
-            // 1. Only run if we are looking at the Camera tab
             if (tab_value !== '1') {
                 return '';
             }
 
-            // 2. Poll for the video element safely within Dash's ecosystem
             const initializeCamera = () => {
                 const vid = document.getElementById('video');
                 
-                // If Dash is still drawing the layout, check again in 50ms
                 if (!vid) {
                     setTimeout(initializeCamera, 50);
                     return;
                 }
 
-                // If camera track is active, don't restart it
                 if (vid.srcObject && vid.srcObject.getTracks && vid.srcObject.getTracks().length > 0) {
                     return;
                 }
 
-                // 3. Fire up the camera stream
-                navigator.mediaDevices.getUserMedia({ video: true })
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                    width: { ideal: 240 },
+                    height: { ideal: 180 },
+                    frameRate: { ideal: 24, max: 24 } 
+                    } 
+                    })
                     .then(function(stream) {
                         vid.srcObject = stream;
                         vid.onloadedmetadata = function() { 
@@ -39,25 +40,37 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
         },
 
         captureImage: function(n_clicks) {
-            // Prevent execution on initial page render
             if (!n_clicks) return 0;
 
             const video = document.getElementById('video');
+            const flash = document.getElementById('camera-flash');
+
             if (!video || !video.videoWidth) {
                 console.error("Video element not ready for capture.");
                 return 0;
             }
 
-            // Draw current video frame to a canvas
+            if (video && flash) {
+                video.pause();
+
+                flash.style.transition = 'none';
+                flash.style.opacity = '0.9';
+
+                setTimeout(() => {
+                    flash.style.transition = 'opacity 0.3s ease-out';
+                    flash.style.opacity = '0';
+                    video.play().catch(e => console.error("Video resume error:", e));
+                }, 100);
+            }
+
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            const context= canvas.getContext('2d');
+            const context = canvas.getContext('2d');
             context.drawImage(video, 0, 0);
 
             const dataUrl = canvas.toDataURL('image/png');
 
-            // Send image up to the Flask route endpoint
             return fetch("/upload_image", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
@@ -68,7 +81,6 @@ window.dash_clientside = Object.assign({}, window.dash_clientside, {
                     console.error("Upload failed");
                     return 0;
                 }
-                // Return a timestamp token to satisfy the Output element
                 return (new Date()).getTime();
             })
             .catch(err => {
