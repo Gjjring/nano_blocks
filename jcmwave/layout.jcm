@@ -1,0 +1,192 @@
+Layout2D {
+
+  CoordinateSystem = Cartesian
+
+  Name = "NanoBlocks"
+
+  UnitOfLength = 1e-9
+
+  BoundaryConditions {
+
+    Boundary {
+
+      Direction = All
+
+      Class = Transparent
+
+    }
+
+  }
+
+  Objects {
+
+    Parallelogram {
+
+      Height = 500.00
+      Width =  660.00
+      Priority = ComputationalDomain
+
+      Name = "Background"
+
+      DomainId = 1
+
+      Port = Point1
+
+      GlobalPosition = [0., 0.]
+
+      MeshOptions {
+
+        MaximumSideLength = 50.
+
+      }
+
+    }
+
+
+
+    Polygon {
+
+      DomainId = 2
+
+      Points = [ 42.5, 184. ;
+ 42.5, 208. ;
+ 10. , 227.5;
+  9.5, 185. ]
+      MeshOptions {
+
+        MaximumSideLength = 25.
+
+      }
+
+    }
+
+
+
+    Polygon {
+
+      DomainId = 2
+
+      Points = [125.5, 359. ;
+104. , 410.5;
+ 71.5, 407. ;
+ 73. , 379.5]
+      MeshOptions {
+
+        MaximumSideLength = 25.
+
+      }
+
+    }
+
+
+
+    Polygon {
+
+      DomainId = 2
+
+      Points = [117. , 463.5;
+161. , 490.5;
+110.5, 490. ]
+      MeshOptions {
+
+        MaximumSideLength = 25.
+
+      }
+
+    }
+
+
+
+    Polygon {
+
+      DomainId = 2
+
+      Points = [165.5,  33. ;
+165. ,  57.5;
+124.5,  66. ;
+125. ,  38.5]
+      MeshOptions {
+
+        MaximumSideLength = 25.
+
+      }
+
+    }
+
+
+
+    Polygon {
+
+      DomainId = 2
+
+      Points = [414.5,  12. ;
+405.5,  51. ;
+378. ,  52.5;
+388.5,  12. ]
+      MeshOptions {
+
+        MaximumSideLength = 25.
+
+      }
+
+    }
+
+
+
+    Polygon {
+
+      DomainId = 2
+
+      Points = [590.5, 478. ;
+553. , 490.5;
+539.5, 453. ;
+565. , 451.5;
+565.5, 475. ]
+      MeshOptions {
+
+        MaximumSideLength = 25.
+
+      }
+
+    }
+
+
+
+    Polygon {
+
+      DomainId = 2
+
+      Points = [612.5,  11. ;
+601.5,  88. ;
+569. ,  85.5;
+565.5,  15. ]
+      MeshOptions {
+
+        MaximumSideLength = 25.
+
+      }
+
+    }
+
+
+
+    Polygon {
+
+      DomainId = 2
+
+      Points = [613.5, 288. ;
+612. , 316.5;
+569.5, 325. ;
+570. , 300.5]
+      MeshOptions {
+
+        MaximumSideLength = 25.
+
+      }
+
+    }
+
+
+  }
+
+}

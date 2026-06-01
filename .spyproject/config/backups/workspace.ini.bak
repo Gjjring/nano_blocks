@@ -1,0 +1,12 @@
+[workspace]
+restore_data_on_startup = True
+save_data_on_exit = True
+save_history = True
+save_non_project_files = False
+project_type = 'empty-project-type'
+recent_files = ['dev\\landscape_plotly.py', 'dev\\lanscape_test.py', '..\\glass_fibre_project\\pages\\page1.py', 'dev\\landscape_plotly_backup.py', '..\\glass_fibre_project\\app.py', 'dev\\landscape.py']
+
+[main]
+version = 0.2.0
+recent_files = []
+

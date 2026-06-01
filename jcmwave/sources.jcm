@@ -1,0 +1,41 @@
+#SourceBag {
+#  Source { 
+#    ElectricFieldStrength {
+#      GaussianBeam {        
+#        3DTo2D = yes
+#        Incidence = FromAbove
+#        Lambda0 = 100e-9
+#        SP = [0 1]
+#        ThetaPhi = [0 0]
+#        Focus = [2e-7, 2e-7, 0]
+#        Waist =  200e-9
+#      }
+#    }
+#  }
+#}
+
+#SourceBag {
+#  Source {
+#    ElectricFieldStrength {
+#      FieldBag {
+#        FileName = "input_field/project_results/fieldbag.jcm"
+#        Weights = [1.0 ]
+#        Rotation = Y:-X:Z
+#      }
+#    }
+#  }
+#}
+
+SourceBag {
+  Source {
+    ElectricFieldStrength {
+      PlaneWave {        
+        3DTo2D = yes
+        Incidence = FromAbove
+        Lambda0 = 100e-9
+        SP = [0 1]
+        ThetaPhi = [0 0]
+      }
+    }
+  }
+}

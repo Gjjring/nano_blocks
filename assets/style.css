@@ -1,0 +1,67 @@
+/* generell styles that are required fpor every file for the website */
+@font-face {
+    font-family: "Roboto";
+    src: url("./Roboto-VariableFont_wdth,wght.ttf") format("truetype");
+}
+
+body{
+    font-family: "Roboto", sans-serif;
+}
+
+h3{
+    font-size: 36px;
+}
+p{
+    font-size: 18px;
+}
+button{
+    border: None;
+    padding: 5px;
+    margin: 10px;
+    border-radius: 3px;
+    font-size: 18px;
+}
+
+.site{
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+}
+
+.content{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+
+.page-tabs{
+    font-size: 18px;
+    width: inherit;
+}
+
+.content-page{
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    width: inherit;
+}
+
+.navigation{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid black;
+    width: inherit;
+    height: 60px;
+}
+
+.spacer{
+    flex-grow: 1;
+}
+
+#navBtn{
+    font-size: 24px;
+    flex-grow: 0;
+}

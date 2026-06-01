@@ -1,0 +1,43 @@
+Project {
+  Electromagnetics {
+    TimeHarmonic {
+      PropagatingMode {
+        BlochVector = [0 0]
+        FieldComponents = ElectricXYZ
+        
+        Accuracy {
+          FiniteElementDegree = 6          
+        }
+        PML {
+          StartThicknessLevel = 5
+        }
+        Lambda0 = 500e-9
+        SelectionCriterion {
+          MirrorSymmetry = MagneticSymmetric
+          #Range = [(1.8836515673088532e+16, -1e13), (3767303134617706.5, 0)]
+#          AllInRange {           
+#          }
+          
+          NearGuess {             
+            #Lambda = 1000e-9
+            Guess = 3.0
+            NumberEigenvalues = 1
+          }
+        }
+      }
+    }
+  }
+}
+
+PostProcess {
+  ExportFields {
+    FieldBagPath = "project_results/fieldbag.jcm"
+    OutputFileName = "project_results/efield.jcm"
+    OutputQuantity = ElectricFieldEnergyDensity
+    Cartesian {
+      NGridPointsX = 101
+      NGridPointsY = 11
+      GridPointsZ = 0.
+    }
+  }
+}

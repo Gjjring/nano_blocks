@@ -1,0 +1,25 @@
+Project {
+  InfoLevel = 3
+  Electromagnetics {
+    TimeHarmonic {
+      PropagatingMode {
+        AxisPositionX = -2e-6
+        Lambda0 = 1.5e-6
+
+        Accuracy {
+          Precision=1e-6
+          Refinement { 
+            PreRefinements = 2
+            MaxNumberSteps = 1
+          }
+        }
+        SelectionCriterion {
+          NearGuess {
+            Guess = 3.0
+            NumberEigenvalues = 1
+          }
+        }
+      }
+    }
+  }
+}
