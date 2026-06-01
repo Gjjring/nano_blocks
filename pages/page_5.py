@@ -3,6 +3,7 @@ from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.colors import qualitative
 from dash.exceptions import PreventUpdate
 from flask import request, jsonify
 from flask import Flask, session
@@ -16,6 +17,7 @@ from datetime import datetime
 import numpy as np
 import skimage as ski
 import shapely
+import hashlib
 import jcmwave
 
 dash.register_page(__name__, path = "/page_5")
@@ -24,7 +26,19 @@ server = app.server
 
 layout = html.Div([
     html.Hr(),
-    dcc.Graph(id = 'jcm_output'),
+
+    dcc.Dropdown(
+        options=['Simulation Mesh', 'Intensity'],
+        value='Simulation Mesh',
+        id='plot-type-dropdown',
+        style={"width": "300px", "margin": "0 auto"}
+    ),
+    dcc.Loading(
+        type="circle",
+        children=[
+            dcc.Graph(id = 'jcm_output', style={"height": "900px"}),
+        ]
+    ),
 ])
 
 def run_jcmwave_simulation(threshold_data):
@@ -39,30 +53,164 @@ def run_jcmwave_simulation(threshold_data):
         if p.area > 1000:
             big_poly = p
 
-            
-            p2 = p.simplify(15.)            
-            
+
+            p2 = p.simplify(15.)
+
             c = np.array(p2.exterior.coords)
-            c = c[:-1, :]            
+            c = c[:-1, :]
             c[:, 1] = keys['cd_height']-c[:, 1]
-            mid_point = np.tile(np.mean(c, axis=0), c.shape[0]).reshape(c.shape)            
-          
+            mid_point = np.tile(np.mean(c, axis=0), c.shape[0]).reshape(c.shape)
+
             keys['polygons'].append(c)
-    
-    #jcmwave.jcmt2jcm("layout.jcmt", keys=keys)
+
+
+
+
+    jcmwave.jcmt2jcm(os.path.join("jcmwave", "layout.jcmt"), keys=keys)
+    with open(os.path.join("jcmwave", "layout.jcm"), encoding="utf-8") as f:
+        text = f.read()
+    hash_value = hashlib.sha256(text.encode("utf-8")).hexdigest()
+
     #jcmwave.geo(".")
-    results = jcmwave.solve(os.path.join("jcmwave","project.jcmpt"), keys=keys)
-    cart_field = results[1]
+
+    if "simulation_hash" in session and hash_value == session['simulation_hash']:
+        cart_field = jcmwave.loadcartesianfields(
+            os.path.join("jcmwave", "project_results", "field.jcm")
+        )
+        grid_tables = jcmwave.loadtable(os.path.join("jcmwave", "grid_table.jcm"))
+    else:
+        results = jcmwave.solve(os.path.join("jcmwave","project.jcmpt"), keys=keys)
+        session['simulation_hash'] = hash_value
+        cart_field = results[1]
+        grid_tables = results[2]
 
     e_field = np.linalg.norm(np.abs(cart_field['field'][0]), axis=2)**2
 
-    return e_field
+    return e_field, grid_tables
+
+def make_field_data_plot(field_data):
+    zmax = np.max([np.max(field_data)*0.9, 1.0])
+    fig = px.imshow(field_data.T, origin="lower",
+                    zmin=0., zmax=zmax,
+                    color_continuous_scale="turbo")
+    return fig
+
+def make_grid_plot(grid_tables):
+    vertices = grid_tables[0]['Points'][:, :2] #2D points
+
+    triangles = np.zeros((grid_tables[1]['Points'][0].size, 3), dtype=np.int64)
+    triangles[:, 0] = grid_tables[1]['Points'][0]
+    triangles[:, 1] = grid_tables[1]['Points'][1]
+    triangles[:, 2] = grid_tables[1]['Points'][2]
+    triangles -= 1
+    color_index = grid_tables[1]['DomainId']
+
+    palette = qualitative.Plotly
+
+    unique_colors = np.unique(color_index)
+
+    color_map = {
+        c: palette[i % len(palette)]
+        for i, c in enumerate(unique_colors)
+    }
+
+    fig = go.Figure()
+
+    # for tri, c in zip(triangles, color_index):
+    #     pts = vertices[tri]
+
+    #     fig.add_trace(
+    #         go.Scatter(
+    #             x=np.r_[pts[:, 0], pts[0, 0]],
+    #             y=np.r_[pts[:, 1], pts[0, 1]],
+    #             fill="toself",
+    #             mode="lines",
+    #             line=dict(color="black"),
+    #             fillcolor=palette[c % len(palette)],
+    #             showlegend=False
+    #         )
+    #     )
+
+    for color_id in np.unique(color_index):
+        xs = []
+        ys = []
+
+        for tri in triangles[color_index == color_id]:
+            pts = vertices[tri]
+
+            xs.extend([pts[0,0], pts[1,0], pts[2,0], pts[0,0], None])
+            ys.extend([pts[0,1], pts[1,1], pts[2,1], pts[0,1], None])
+
+        fig.add_trace(
+            go.Scatter(
+                x=xs,
+                y=ys,
+                mode="lines",
+                fill="toself",
+                fillcolor=color_map[color_id],
+                line=dict(width=1),
+                showlegend=False
+            )
+        )
+
+    edge_x = []
+    edge_y = []
+
+    for tri in triangles:
+        pts = vertices[tri]
+
+        edge_x.extend([
+            pts[0, 0], pts[1, 0],
+            None,
+            pts[1, 0], pts[2, 0],
+            None,
+            pts[2, 0], pts[0, 0],
+            None
+        ])
+
+        edge_y.extend([
+            pts[0, 1], pts[1, 1],
+            None,
+            pts[1, 1], pts[2, 1],
+            None,
+            pts[2, 1], pts[0, 1],
+            None
+        ])
+
+    fig.add_trace(
+        go.Scatter(
+            x=edge_x,
+            y=edge_y,
+            mode="lines",
+            line=dict(color="black", width=0.5),
+            showlegend=False,
+            hoverinfo="skip",
+        )
+    )
+
+    xmin, ymin = vertices.min(axis=0)
+    xmax, ymax = vertices.max(axis=0)
+
+    # optional small padding
+    #pad = 0.02 * max(xmax - xmin, ymax - ymin)
+    pad = 0.
+
+    fig.update_xaxes(range=[xmin - pad, xmax + pad])
+    fig.update_yaxes(range=[ymin - pad, ymax + pad])
+
+    # keep aspect ratio
+    fig.update_yaxes(scaleanchor="x", scaleratio=1)
+    #fig.update_yaxes(scaleanchor="x", scaleratio=1)
+    return fig
+
+
 
 @app.callback([Output(component_id='jcm_output', component_property= 'figure'),
               ],
               [Input("current-page-store", "data"),
+               Input("plot-type-dropdown", "value"),
                 ])
-def make_jcmwave_simulation(data):
+def make_jcmwave_simulation(data, plot_type):
     print("make_jcmwave_simulation was called")
     print("Value of data: ", data, type(data))
     if data is None:
@@ -75,20 +223,32 @@ def make_jcmwave_simulation(data):
             print("Reached")
         except:
             raise PreventUpdate()
-        
-            
+
+
         print("img data shape: {}".format(threshold_data.shape))
         for ii in range(1):
             print(ii, np.min(threshold_data), np.max(threshold_data))
-        
-        field_data = run_jcmwave_simulation(threshold_data)
-    
-        fig = px.imshow(field_data.T, origin="lower")
+
+
+        field_data, grid_tables = run_jcmwave_simulation(threshold_data)
+        if plot_type == "Simulation Mesh":
+            fig = make_grid_plot(grid_tables)
+        elif plot_type == "Intensity":
+            fig = make_field_data_plot(field_data)
+        else:
+            raise PreventUpdate()
 
     fig.update_layout(coloraxis_showscale=False)
     fig.update_xaxes(showticklabels=False)
     fig.update_yaxes(showticklabels=False)
+
+    fig.update_layout(
+        height=900,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+    )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
+
     return [fig]
-
-
-

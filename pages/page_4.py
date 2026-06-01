@@ -3,6 +3,7 @@ from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH, ALL
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.colors import qualitative
 from dash.exceptions import PreventUpdate
 from flask import request, jsonify
 from flask import Flask, session
@@ -26,7 +27,7 @@ layout = html.Div([
     dcc.Graph(id = 'threshold_image'),
 
             dbc.Row([
-                dbc.Col([                                 
+                dbc.Col([
                         html.P("Hue", id="hue_label"),
                     ],
                     width=1
@@ -40,7 +41,7 @@ layout = html.Div([
                 justify="center"
             ),
             dbc.Row([
-                dbc.Col([                                 
+                dbc.Col([
                         html.P("Saturation", id="saturation_label"),
                     ],
                     width=1
@@ -54,7 +55,7 @@ layout = html.Div([
                 justify="center"
             ),
             dbc.Row([
-                dbc.Col([                                 
+                dbc.Col([
                         html.P(" Value ", id="value_label"),
                     ],
                     width=1
@@ -76,12 +77,12 @@ layout = html.Div([
     Output('saturation_slider', 'value'),
     Output('value_slider', 'value'),
     Input('threshold_color', 'data'),
-    Input('hue_slider', 'id') 
+    Input('hue_slider', 'id')
 )
 def initialize_or_restore_sliders(target_color, page_init):
     active_img_id = session.get("active_image_id", None)
     last_img_id = session.get("slider_last_image_id", None)
-    
+
     default_hue = [0.4, 0.5]
     default_sat = [0.5, 1.0]
     default_val = [0.1, 1.0]
@@ -111,7 +112,7 @@ def initialize_or_restore_sliders(target_color, page_init):
 
 
 @app.callback(Output(component_id='threshold_image', component_property= 'figure'),
-              Input('hue_slider', 'value'), 
+              Input('hue_slider', 'value'),
               Input('saturation_slider', 'value'),
               Input('value_slider', 'value'))
 def make_threshold_image(hue_range, saturation_range, value_range):
@@ -119,12 +120,12 @@ def make_threshold_image(hue_range, saturation_range, value_range):
         img_data = session["current_raw_image"]
     except:
         raise PreventUpdate()
-    
+
     session["slider_hue"] = hue_range
     session["slider_sat"] = saturation_range
     session["slider_val"] = value_range
     session.modified = True
-        
+
     print("img data shape: {}".format(img_data.shape))
     for ii in range(4):
         print(ii, np.min(img_data[..., ii]), np.max(img_data[..., ii]))
@@ -132,7 +133,7 @@ def make_threshold_image(hue_range, saturation_range, value_range):
 
     hsv_lower = np.array([hue_range[0], saturation_range[0], value_range[0]], dtype = float)
     hsv_higher = np.array([hue_range[1], saturation_range[1], value_range[1]], dtype = float)
-    
+
     print("HSV LOWER: ", hsv_lower)
     print("HSV HIGHER: ", hsv_higher)
     print("np data shape: {}".format(np_data.shape))
@@ -149,12 +150,27 @@ def make_threshold_image(hue_range, saturation_range, value_range):
     edge = 20
     half_edge = int(edge/2)
     ix, iy = binary_mask.shape
-    new_mask = np.zeros((ix+edge, iy+edge), dtype=np.bool_)
+    new_mask = np.zeros((ix+edge, iy+edge), dtype=np.int64)
     new_mask[half_edge:-half_edge, half_edge:-half_edge] = binary_mask
 
     session['current_threshold_image'] = new_mask
 
-    fig = px.imshow(new_mask)
+    palette = qualitative.Plotly
+    unique_colors = np.array([0, 1])
+    colors = []
+    for color_value in unique_colors:
+        colors.append(palette[color_value])
+
+
+    fig = px.imshow(
+        new_mask,
+        color_continuous_scale=[
+            [0.0, colors[0]],  # value 0
+            [1.0, colors[1]],  # value 1
+        ],
+        zmin=0.,
+        zmax=1.0,
+    )
 
 
     fig.update_layout(coloraxis_showscale=False)
