@@ -73,7 +73,7 @@ def run_jcmwave_simulation(threshold_data):
             big_poly = p
 
 
-            p2 = p.simplify(15.)
+            p2 = p.simplify(1)
 
             c = np.array(p2.exterior.coords)
             c = c[:-1, :]

@@ -85,3 +85,9 @@ button{
     font-size: 24px;
     width: 25vh;
 }
+
+
+#drawing-area{
+    width: 640px;
+    height: 480px;
+}

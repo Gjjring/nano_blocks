@@ -126,10 +126,15 @@ def make_threshold_image(hue_range, saturation_range, value_range):
     session["slider_val"] = value_range
     session.modified = True
 
+    if(img_data.shape[2] == 4):
+        np_data = np.array(img_data[..., :3], dtype=np.uint8)
+    else:
+        np_data = img_data
+
+
     print("img data shape: {}".format(img_data.shape))
-    for ii in range(4):
+    for ii in range(3):
         print(ii, np.min(img_data[..., ii]), np.max(img_data[..., ii]))
-    np_data = np.array(img_data[..., :3], dtype=np.uint8)
 
     hsv_lower = np.array([hue_range[0], saturation_range[0], value_range[0]], dtype = float)
     hsv_higher = np.array([hue_range[1], saturation_range[1], value_range[1]], dtype = float)

@@ -43,6 +43,7 @@ app.layout = html.Div(id = 'site', children = [
     dcc.Store(id='raw_image_data'),
     dcc.Store(id='threshold_color'),
     dcc.Store(id="current-page-store", data = 1),
+    dcc.Store(id='inner-tab-store', data='camera'),
     dcc.Store(id='blocked_tabs', data=False, storage_type='session'),
 
     dcc.Store(id='initial-load-detector', data=False, storage_type='memory'),
@@ -54,7 +55,7 @@ app.layout = html.Div(id = 'site', children = [
 
     html.Div(id = 'content', children = [
         dcc.Tabs(id='page-tabs', value = '1', children = [
-            dcc.Tab(label='Camera', value = '1'),
+            dcc.Tab(label='Create Image', value = '1'),
             dcc.Tab(label='Gallery', value = '2'),
             dcc.Tab(label='Color', value = '3'),
             dcc.Tab(label='Adjust', value = '4'),
