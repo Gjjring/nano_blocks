@@ -1,0 +1,34 @@
+Project {
+  InfoLevel = -1
+  Electromagnetics {
+    TimeHarmonic {
+      PropagatingMode {
+        Lambda0 = %(vacuum_wavelength)e
+        FieldComponents = ElectricXZ
+        Accuracy {
+          Precision=1e-4
+          Refinement { 
+            PreRefinements = 4
+          }
+        }
+        SelectionCriterion {
+          NearGuess {
+            Guess = 3.5
+            NumberEigenvalues = 1            
+          }
+          Filter {
+            ConfinementFactor = 0.9
+            CoreRegion {
+              DomainIds = 2
+                # Box {
+                #     Center = [%(wg_displacement_left)e 0 0]
+                #   #Width = %(wg_width)e
+                #   Size = %(wg_width)e
+                # }
+            }
+          }
+        }
+      }
+    }
+  }
+}

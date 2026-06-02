@@ -1,0 +1,5 @@
+ExtractFace {
+  InputFileName="../2D/grid.jcm"
+  BoundaryId = %(boundary_id)d
+  CoordinateSystem=Global
+}

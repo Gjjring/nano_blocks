@@ -1,0 +1,74 @@
+Project { 
+  InfoLevel = -1
+  Electromagnetics { 
+    TimeHarmonic { 
+      Scattering { 
+        Accuracy {
+          Precision=1e-4          
+        }
+        PML {
+          MaxThicknessSteps = 0
+          Compartment {
+            Direction = [-X,X]
+            StartThicknessLevel = 2            
+          }
+        }
+      }
+    } 
+  } 
+} 
+
+PostProcess {
+  ExportFields {
+    OutputFileName = "project_results/field.jcm"
+    FieldBagPath = "project_results/fieldbag.jcm"
+    OutputQuantity = ElectricFieldStrength
+    Cartesian {
+      NGridPointsX = 801
+      NGridPointsY = 601
+      GridPointsZ = 0.
+    }
+  }
+}
+
+PostProcess {
+  ExportGrid {
+    InputFileName = "grid.jcm"
+    OutputFileName = "grid_table.jcm"
+    Format = JCM-ASCII
+    ExportAsTable = yes
+  }
+}
+
+#PostProcess {
+#  ModeOverlap {
+#    FieldBagPath = "project_results/fieldbag.jcm"
+#    ModeFileName = "%(path_out_port_fields)s"
+#    OutputFileName =  "overlap_transm.jcm"
+#    }
+#}
+#PostProcess {
+#  ModeOverlap {
+#    FieldBagPath = "project_results/fieldbag.jcm"
+#    ModeFileName = "%(path_in_port_fields)s"
+#    OutputFileName =  "overlap_ref.jcm"
+#    }
+#}
+#
+#<?
+#if(keys['plot_pv_eps']):
+#    ?>
+#    PostProcess {
+#      ExportFields {
+#        FieldBagPath = "project_results/fieldbag.jcm"
+#        OutputQuantity = ElectromagneticFieldEnergyFluxDensity
+#        OutputFileName = "poynting_flux.jcm"
+#        Cartesian {
+#          NGridPointsX = 301
+#          NGridPointsY = 1201
+#        }
+#      }
+#    }
+#<?
+#?>
+#

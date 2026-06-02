@@ -43,10 +43,29 @@ layout = html.Div([
 
 def run_jcmwave_simulation(threshold_data):
     keys = {}
-    keys['cd_width'] = threshold_data.shape[1]
-    keys['cd_height'] = threshold_data.shape[0]
-    keys['polygons'] = []
 
+    keys['cd_width'] = 6
+    keys['cd_height'] = 5
+    keys['user_area_width'] = keys['cd_width'] - 2
+    keys['user_area_height'] = keys['cd_height'] - 2
+    keys['wg_width'] = 0.3
+    keys['wg_displacement_left'] = -1
+    keys['wg_displacement_right'] = 1
+    keys['wg_stub_length'] = 1.
+    keys['boundary_id'] = 1
+    keys['vacuum_wavelength'] = 500e-9
+    keys['in_port_fields_path'] = os.path.abspath(os.path.join("jcmwave2", "1D", "project_results", "fieldbag.jcm"))
+
+    image_width = threshold_data.shape[1]
+    image_height = threshold_data.shape[0]
+    image_buffer  = 20
+    half_buffer = int(image_buffer / 2)
+    image_width_without_buffer = image_width - image_buffer
+    image_height_without_buffer = image_height - image_buffer
+    keys['polygons'] = []
+    print("image shape: {}".format(threshold_data.shape))
+    print("image dimensions: {} x {}".format(image_width, image_height))
+    print("image width without buffer: {}, image height without buffer: {}".format(image_width_without_buffer, image_height_without_buffer))
     contours = ski.measure.find_contours(threshold_data.T, 0.5)
     for contour in contours:
         p = shapely.Polygon(contour)
@@ -58,16 +77,22 @@ def run_jcmwave_simulation(threshold_data):
 
             c = np.array(p2.exterior.coords)
             c = c[:-1, :]
-            c[:, 1] = keys['cd_height']-c[:, 1]
+            c[:, 1] = image_height-c[:, 1]
             mid_point = np.tile(np.mean(c, axis=0), c.shape[0]).reshape(c.shape)
 
-            keys['polygons'].append(c)
+            keys['polygons'].append(np.ceil(c))
+
+    for polygon in keys['polygons']:
+        print("polygon ymin: {}, ymax: {}, x min: {}, x max: {}".format(np.min(polygon[:, 1]), np.max(polygon[:, 1]), np.min(polygon[:, 0]), np.max(polygon[:, 0])))
+        polygon[:, 0] = (polygon[:, 0]- (half_buffer+1) )/ (image_width_without_buffer-1) * keys['user_area_width'] + 1 - keys['cd_width']/2
+        #polygon[:, 0] = (polygon[:, 0]- half_buffer )/ image_width_without_buffer * keys['user_area_width'] + 1 - keys['cd_width']/2
+        polygon[:, 1] = (polygon[:, 1]- (half_buffer+1) )/ (image_height_without_buffer-1) * keys['user_area_height'] + 1 - keys['cd_height']/2
 
 
 
 
-    jcmwave.jcmt2jcm(os.path.join("jcmwave", "layout.jcmt"), keys=keys)
-    with open(os.path.join("jcmwave", "layout.jcm"), encoding="utf-8") as f:
+    jcmwave.jcmt2jcm(os.path.join("jcmwave2", "2D", "layout.jcmt"), keys=keys)
+    with open(os.path.join("jcmwave2", "2D", "layout.jcm"), encoding="utf-8") as f:
         text = f.read()
     hash_value = hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -75,11 +100,13 @@ def run_jcmwave_simulation(threshold_data):
 
     if "simulation_hash" in session and hash_value == session['simulation_hash']:
         cart_field = jcmwave.loadcartesianfields(
-            os.path.join("jcmwave", "project_results", "field.jcm")
+            os.path.join("jcmwave2", "2D","project_results", "field.jcm")
         )
-        grid_tables = jcmwave.loadtable(os.path.join("jcmwave", "grid_table.jcm"))
+        grid_tables = jcmwave.loadtable(os.path.join("jcmwave2", "2D", "grid_table.jcm"))
     else:
-        results = jcmwave.solve(os.path.join("jcmwave","project.jcmpt"), keys=keys)
+        jcmwave.geo(os.path.join("jcmwave2", "2D"), keys=keys)
+        jcmwave.solve(os.path.join("jcmwave2", "1D","project.jcmpt"), keys=keys)
+        results = jcmwave.solve(os.path.join("jcmwave2", "2D","project.jcmpt"), keys=keys)
         session['simulation_hash'] = hash_value
         cart_field = results[1]
         grid_tables = results[2]

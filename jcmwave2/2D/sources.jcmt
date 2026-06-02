@@ -1,0 +1,10 @@
+SourceBag {
+  Source {
+    ElectricFieldStrength {
+      FieldBag {
+       FileName = "%(in_port_fields_path)s"
+      }
+    }
+  }
+}
+

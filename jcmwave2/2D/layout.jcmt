@@ -1,0 +1,121 @@
+<?
+keys['wg_displacement_left_reversed'] = -1*keys['wg_displacement_left']
+keys['wg_displacement_right_reversed'] = -1*keys['wg_displacement_right']
+?>
+Layout2D {
+  Name = "Waveguide_Filter"
+  UnitOfLength = 1e-06
+  
+  MeshOptions {
+    MaximumSideLength = 0.3
+  }
+  Objects {
+    Parallelogram {
+      Name = "ComputationalDomain"
+      Width = %(cd_width)e
+      Height = %(cd_height)e
+      DomainId = 1
+      Priority = -1
+       Boundary {
+        Class = Transparent
+        Number = 1
+        BoundaryId = 1
+      }
+      Boundary {
+        Class = Transparent
+        Number = 2
+        BoundaryId = 2
+      }
+      Boundary {
+        Class = Transparent
+        Number = 3
+        BoundaryId = 3
+      }
+      Boundary {
+        Class = Transparent
+        Number = 4
+        BoundaryId = 4
+      }
+    }
+
+    Parallelogram {
+      Name = "wg_in_left"
+      Width = %(wg_width)e
+      Height = %(wg_stub_length)e
+      DomainId = 2
+      Priority = 2
+      Port = South
+      Alignment {
+        Displacement = [%(wg_displacement_left)e, 0]
+        Parent {
+          Domain = "ComputationalDomain"
+          Port = South
+        }
+        Orientation = Parallel
+      }
+    }
+    Parallelogram {
+      Name = "wg_out_left"
+      Width = %(wg_width)e
+      Height = %(wg_stub_length)e
+      Priority = 2
+      DomainId = 2
+      Port = North
+      Alignment {
+        Displacement = [%(wg_displacement_left_reversed)e, 0]        
+        Parent {
+          Domain = "ComputationalDomain"
+          Port = North
+        }
+        Orientation = Parallel
+      }
+    }
+
+    Parallelogram {
+      Name = "wg_in_right"
+      Width = %(wg_width)e
+      Height = %(wg_stub_length)e
+      DomainId = 2
+      Priority = 2
+      Port = South
+      Boundary {
+        ExteriorDomainId = 3
+      }
+      Alignment {
+        Displacement = [%(wg_displacement_right)e, 0]
+        Parent {
+          Domain = "ComputationalDomain"
+          Port = South
+        }
+        Orientation = Parallel
+      }
+    }
+    Parallelogram {
+      Name = "wg_out_right"
+      Width = %(wg_width)e
+      Height = %(wg_stub_length)e
+      Priority = 2
+      DomainId = 2
+      Port = North
+      Alignment {
+        Displacement = [%(wg_displacement_right_reversed)e, 0]        
+        Parent {
+          Domain = "ComputationalDomain"
+          Port = North
+        }
+        Orientation = Parallel
+      }
+    }
+<?
+for poly in keys['polygons']:
+  keys['current_points'] = poly
+  ?>
+    Polygon {
+      DomainId = 2
+      Points = %(current_points)e
+    }
+<?
+
+?>      
+  }
+}
