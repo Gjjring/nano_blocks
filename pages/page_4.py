@@ -160,12 +160,11 @@ def make_threshold_image(hue_range, saturation_range, value_range):
 
     session['current_threshold_image'] = new_mask
 
-    palette = qualitative.Plotly
-    unique_colors = np.array([0, 1])
+    palette = qualitative.Safe
+    palette2 = qualitative.Alphabet
     colors = []
-    for color_value in unique_colors:
-        colors.append(palette[color_value])
-
+    colors.append(palette2[8])
+    colors.append(palette[0])
 
     fig = px.imshow(
         new_mask,
