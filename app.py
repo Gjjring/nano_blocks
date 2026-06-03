@@ -192,6 +192,7 @@ def toggle_dropdown(n_clicks, current_style):
     prevent_initial_call=True
 )
 def select_option(btn_a, btn_b, btn_c, btn_d):
+    print("select_option called with clicks:", btn_a, btn_b, btn_c, btn_d)
     triggered_id = ctx.triggered_id
 
     if triggered_id == "btn-opt-a":
@@ -208,38 +209,6 @@ def select_option(btn_a, btn_b, btn_c, btn_d):
     return selected_value, {"display": "none"}
 
 
-#laden der Task-Images
-@callback(
-    Output('camera-overlay-image', 'src'),
-    Output('camera-overlay-image', 'style'),
-    Input('dropdown-selection-store', 'data'),
-    prevent_initial_call=False
-)
-def update_overlay(selected_value):
-    base_style = {
-        'position': 'absolute', 'top': '0', 'left': '0', 
-        'width': '640px', 'height': '480px', 'zIndex': '10', 
-        'pointerEvents': 'none', 'display': 'none'
-    }
-    
-    if selected_value == "btn-opt-a":
-        base_style['display'] = 'block'
-        return '/assets/filter_a.png', base_style
-        
-    elif selected_value == "btn-opt-b":
-        base_style['display'] = 'block'
-        return '/assets/filter_b.png', base_style
-    
-    elif selected_value == "btn-opt-c":
-        base_style['display'] = 'block'
-        return '/assets/filter_c.png', base_style
-    
-    elif selected_value == "btn-opt-d":
-        base_style['display'] = 'block'
-        return '/assets/filter_d.png', base_style
-        
-    else:
-        return '', base_style
 
 
 if __name__ == '__main__':

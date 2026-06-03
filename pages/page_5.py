@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import dash
 from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH, ALL
 import dash_bootstrap_components as dbc
@@ -56,22 +58,44 @@ def order_lexicographically(points, start=0.0, return_sort_indices=False):
         return points[sort_indices, :]
 
 
-def run_jcmwave_simulation(threshold_data):
+def polygon_orientation(vertices):
+    """
+    vertices: list of (x, y) tuples
+    returns: 'CCW', 'CW', or 'DEGENERATE'
+    """
+    area2 = 0
+
+    n = len(vertices)
+    for i in range(n):
+        x1, y1 = vertices[i]
+        x2, y2 = vertices[(i + 1) % n]
+        area2 += x1 * y2 - x2 * y1
+
+    if area2 > 0:
+        return "CCW"
+    elif area2 < 0:
+        return "CW"
+    else:
+        return "DEGENERATE"
+
+def run_jcmwave_simulation(threshold_data, project):
     keys = {}
 
     keys['cd_width'] = 6
-    keys['cd_height'] = 5
+    keys['cd_height'] = 4.5
     keys['user_area_width'] = keys['cd_width'] - 2
-    keys['user_area_height'] = keys['cd_height'] - 2
+    keys['user_area_height'] = keys['cd_height'] - 1.5
     keys['wg_width'] = 0.3
     keys['wg_displacement_left'] = -1
     keys['wg_displacement_right'] = 1
-    keys['wg_stub_length'] = 1.
+    keys['wg_stub_length'] = 0.75
     keys['boundary_id'] = 1
     keys['air_slc'] = 0.25
     keys['dielectric_slc'] = 0.5/3.5
     keys['vacuum_wavelength'] = 500e-9
-    keys['in_port_fields_path'] = os.path.abspath(os.path.join('jcmwave2', '1D', 'project_results', 'fieldbag.jcm'))
+    project_path = Path(project)
+    first_dir = project_path.parts[0]
+    keys['in_port_fields_path'] = os.path.abspath(os.path.join(first_dir, '1D', 'project_results', 'fieldbag.jcm'))
 
     image_width = threshold_data.shape[1]
     image_height = threshold_data.shape[0]
@@ -109,24 +133,22 @@ def run_jcmwave_simulation(threshold_data):
 
     # order the vertices in couterclockwise order starting from the point with the smallest angle to the x-axis
     for i, poly in enumerate(keys['polygons']):
-        c = poly
-        mid_point = np.tile(np.mean(c, axis=0), c.shape[0]).reshape(c.shape)
-        c -= mid_point
-        c = order_lexicographically(c)
-        c += mid_point
-        keys['polygons'][i] = c
+        orientation = polygon_orientation(poly)
+        if orientation == "CW":
+            poly = poly[::-1]
+        keys['polygons'][i] = poly
 
     # now convert the coordinates from pixel coordinates to physical coordinates in micrometers.
     for polygon in keys['polygons']:
         print('polygon ymin: {}, ymax: {}, x min: {}, x max: {}'.format(np.min(polygon[:, 1]), np.max(polygon[:, 1]), np.min(polygon[:, 0]), np.max(polygon[:, 0])))
         polygon[:, 0] = (polygon[:, 0]- (half_buffer+1) )/ (image_width_without_buffer-1) * keys['user_area_width'] + 1 - keys['cd_width']/2
         #polygon[:, 0] = (polygon[:, 0]- half_buffer )/ image_width_without_buffer * keys['user_area_width'] + 1 - keys['cd_width']/2
-        polygon[:, 1] = (polygon[:, 1]- (half_buffer+1) )/ (image_height_without_buffer-1) * keys['user_area_height'] + 1 - keys['cd_height']/2
+        polygon[:, 1] = (polygon[:, 1]- (half_buffer+1) )/ (image_height_without_buffer-1) * keys['user_area_height'] + 0.75 - keys['cd_height']/2
 
     keys['polygons'] = list(zip(keys['polygons'], nesting_levels.values()))
-
-    jcmwave.jcmt2jcm(os.path.join('jcmwave2', '2D', 'layout.jcmt'), keys=keys)
-    with open(os.path.join('jcmwave2', '2D', 'layout.jcm'), encoding='utf-8') as f:
+    jcmwave.jcmt2jcm(os.path.join(project, 'layout.jcmt'), keys=keys)
+    print("checking hash value in : ", os.path.join(project, 'layout.jcm'))
+    with open(os.path.join(project, 'layout.jcm'), encoding='utf-8') as f:
         text = f.read()
     hash_value = hashlib.sha256(text.encode('utf-8')).hexdigest()
 
@@ -134,14 +156,15 @@ def run_jcmwave_simulation(threshold_data):
 
     if 'simulation_hash' in session and hash_value == session['simulation_hash']:
         cart_field = jcmwave.loadcartesianfields(
-            os.path.join('jcmwave2', '2D','project_results', 'field.jcm')
+            os.path.join(project, 'project_results', 'field.jcm')
         )
-        grid_tables = jcmwave.loadtable(os.path.join("jcmwave2", "2D", "grid_table.jcm"))
+        grid_tables = jcmwave.loadtable(os.path.join(project, 'grid_table.jcm'))
         is_updated = False
     else:
-        jcmwave.geo(os.path.join('jcmwave2', '2D'), keys=keys)
-        jcmwave.solve(os.path.join('jcmwave2', '1D','project.jcmpt'), keys=keys)
-        results = jcmwave.solve(os.path.join('jcmwave2', '2D','project.jcmpt'), keys=keys)
+        jcmwave.geo(os.path.join(project), keys=keys)
+        if not project == "jcmwave":
+            jcmwave.solve(os.path.join(first_dir, '1D','project.jcmpt'), keys=keys)
+        results = jcmwave.solve(os.path.join(project, 'project.jcmpt'), keys=keys)
         session['simulation_hash'] = hash_value
         cart_field = results[1]
         grid_tables = results[2]
@@ -310,8 +333,10 @@ def swap_displayed_data(plot_type):
               ],
               [Input('current-page-store', 'data'),
                Input('plot-type-dropdown', 'value'),
+               Input('dropdown-selection-store', 'data')
                 ])
-def make_jcmwave_simulation(data, plot_type):
+def make_jcmwave_simulation(data, plot_type, selected_option):
+    print("selected option: ", selected_option)
     print('make_jcmwave_simulation was called')
     print('Value of data: ', data, type(data))
     if data is None:
@@ -330,8 +355,12 @@ def make_jcmwave_simulation(data, plot_type):
         for ii in range(1):
             print(ii, np.min(threshold_data), np.max(threshold_data))
 
-
-        field_data, grid_tables, is_updated = run_jcmwave_simulation(threshold_data)
+        match selected_option:
+            case "btn-opt-a":
+                project = "jcmwave"
+            case "btn-opt-b":
+                project = os.path.join('jcmwave2', '2D')
+        field_data, grid_tables, is_updated = run_jcmwave_simulation(threshold_data, project)
         if is_updated:
             fig1 = make_grid_plot(grid_tables)
             fig2 = make_field_data_plot(field_data)
