@@ -42,21 +42,12 @@ layout = html.Div([
                 'transition': 'opacity 0.1s ease-out'
                 })
             ], style={'position': 'relative', 'display': 'inline-block'}),
-            html.Button('Capture', id='capture-btn', n_clicks=0),
-            html.Div([
-                html.Img(id='capture-preview', style={
-                    'width': '150px', 
-                    'height': '112px', 
-                    'objectFit': 'cover',
-                    'border': '2px solid #fff',
-                    'boxShadow': '0 0 8px rgba(0,0,0,0.3)',
-                    'opacity': '0',
-                    'transition': 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out',
-                    'transform': 'scale(0.8)',
-                    'marginLeft': '15px',
-                    'verticalAlign': 'top'
-                })
-            ], style={'display': 'inline-block'}),
+            html.Div(id='camera-controls', children=[
+                html.Button('Capture', id='capture-btn', n_clicks=0),
+                html.Div([
+                    html.Img(id='capture-preview')
+                ], style={'display': 'inline-block'}),
+                ])
             ])
         ]),
 
@@ -76,23 +67,26 @@ layout = html.Div([
                     )
                 ], style={'padding': '15px', 'backgroundColor': '#f9f9f9', 'borderBottom': '1px solid #ddd'}),
             
-                html.Div([
-                    dcc.Graph(
-                        id='drawing-area',
-                        config={
-                            'modeBarButtonsToAdd': ['eraseshape'],
-                            'displayModeBar': True,
-                            'toImageButtonOptions': {
-                                'format': 'png',
-                                'filename': 'meine_zeichnung',
-                                'height': 480,
-                                'width': 640,
-                                'scale': 1
-                            }
-                        },
-                        style={'height': '480', 'width': '640'}
-                    )
-                ], style={'border': '2px solid #333', 'marginTop': '20px', 'borderRadius': '5px', 'padding': '10px', 'width': 'fit-content'}),
+                html.Div(id='container-container', children=[
+                    html.Div(id='draw-container', children=[
+                        dcc.Graph(
+                            id='drawing-area',
+                            config={
+                                'modeBarButtonsToAdd': ['eraseshape'],
+                                'displayModeBar': True,
+                                'toImageButtonOptions': {
+                                    'format': 'png',
+                                    'filename': 'meine_zeichnung',
+                                    'height': 480,
+                                    'width': 640,
+                                    'scale': 1
+                                }
+                            },
+                            style={'height': '480', 'width': '640'}
+                        ),
+                    ]),
+                ]),
+                
             
             html.Button(
                 'Bild speichern', 
@@ -113,7 +107,12 @@ layout = html.Div([
             ])
         ]),
     ]),
-            
+    dcc.Interval(
+    id='preview-fade-timer',
+    interval=1000,
+    n_intervals=0,
+    disabled=True
+    )      
 ])
 
 @app.callback(
@@ -187,16 +186,16 @@ def upload_image():
 
 @app.callback(
     Output('capture-preview', 'src'),
-    Output('capture-preview', 'style'),  # Wir machen das Bild auch gleich sichtbar
+    Output('capture-preview', 'style'),
+    Output('preview-fade-timer', 'disabled'),
+    Output('preview-fade-timer', 'n_intervals'),
     Input('capture-dummy', 'children'),
     prevent_initial_call=True
 )
 def update_preview_src(image_data_uri):
-    # Wenn kein Bild-String ankommt, abbrechen
     if not image_data_uri or isinstance(image_data_uri, int):
         raise PreventUpdate
 
-    # 1. Bild in der Flask-Session speichern (für spätere Pages)
     current_time = datetime.now()
     id_val = current_time.strftime('%Y%m%d%H%M%S%f')
     
@@ -211,23 +210,43 @@ def update_preview_src(image_data_uri):
     
     print(f'N stored images: {len(stored)}')
 
-    # 2. Styling anpassen, damit das Bild von opacity: 0 auf 1 wechselt
     visible_style = {
         'width': '150px', 
         'height': '112px', 
         'objectFit': 'cover',
         'border': '2px solid #fff',
         'boxShadow': '0 0 8px rgba(0,0,0,0.3)',
-        'opacity': '1',  # Sichbarkeit eingeschaltet
+        'opacity': '1',
         'transition': 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out',
-        'transform': 'scale(1.0)', # Leichtes Hereinzoomen
-        'marginLeft': '15px',
+        'transform': 'scale(1.0)',
         'verticalAlign': 'top'
     }
 
-    # Wir geben die Bilddaten direkt an das src-Attribut weiter
-    return image_data_uri, visible_style
+    return image_data_uri, visible_style, False, 0
 
+
+@app.callback(
+    Output('capture-preview', 'style', allow_duplicate=True),
+    Output('preview-fade-timer', 'disabled', allow_duplicate=True),
+    Input('preview-fade-timer', 'n_intervals'),
+    prevent_initial_call=True
+)
+def fade_out_preview(n_intervals):
+    if n_intervals > 0:
+        hidden_style = {
+            'width': '150px', 
+            'height': '112px', 
+            'objectFit': 'cover',
+            'border': '2px solid #fff',
+            'boxShadow': '0 0 8px rgba(0,0,0,0.3)',
+            'opacity': '0',
+            'transition': 'opacity 0.3s ease-in-out, transform 0.3s ease-in-out',
+            'transform': 'scale(0.8)',
+            'verticalAlign': 'top'
+        }
+        return hidden_style, True
+        
+    raise PreventUpdate
 
 #interactive Drawing
 @app.callback(

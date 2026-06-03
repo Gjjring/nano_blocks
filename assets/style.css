@@ -1,4 +1,4 @@
-/* generell styles that are required fpor every file for the website */
+/* generell styles that are required for every file for the website */
 @font-face {
     font-family: "Roboto";
     src: url("./Roboto-VariableFont_wdth,wght.ttf") format("truetype");
@@ -145,16 +145,88 @@ button{
     width: 25vh;
 }
 
-#camera-container{
+#camera-container {
     display: flex;
     flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
+    justify-content: center; 
+    align-items: center;     
     margin-top: 20px;
 }
 
-#drawing-area{
+#camera-controls{
+    display: flex;
+    flex-direction: column;
+}
+
+#video {
+    border: 1px solid black;
+    display: block;
+}
+
+#camera-flash {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 640px;
     height: 480px;
+    background-color: white;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease-out;
+}
+
+#capture-btn {
+    width: 150px;
+}
+
+#capture-preview {
+    width: 150px;
+    height: 112px;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 0 8px rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    transform: scale(0.8);
+    display: block;
+    padding: 3px;
+    margin: 10px;
+}
+
+#container-container{
+    width: 100%;
+}
+
+#draw-container{
+    margin-top: 20px;
+    border: 2px solid #333;
+    padding: 10px;
+    width: fit-content;
+    position: relative;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
+#drawing-area {
+    width: 640px;
+    height: 480px;
+    justify-items: center;
+}
+
+#btn-download {
+    position: relative;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 200px;
+    left: 50%;
+    transform: translate(-50%, 0)
+}
+
+#jcm_mesh_output{
+ height: 100%;   
 }
