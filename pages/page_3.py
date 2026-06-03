@@ -28,34 +28,49 @@ layout = html.Div([
             html.Hr(),
             
             dbc.Row([
-                dbc.Col([
-                    html.Button(
-                        '', id='temporary_color_output',
-                        disabled=True,
-                        style={'textAlign':'center', 'width':'50px', 'height':'50px', 'background-color':'white'}
-                    ),
+        
+            # Linke Spalte (Breite 3 von 12) für die quadratischen Farbanzeigen
+            dbc.Col([
+                html.Button(
+                    '', id='temporary_color_output',
+                    disabled=True,
+                    style={'width':'50px', 'height':'50px', 'background-color':'white', 'marginRight': '10px'} # kleiner Abstand nach rechts
+                ),
+                
+                html.Button(
+                    '', id='color_output',
+                    disabled=True,
+                    style={'width':'50px', 'height':'50px', 'background-color':'white'}
+                ),
+            ], width=3, style={'display': 'flex', 'flexDirection': 'row'}), # Setzt die Buttons sauber nebeneinander
+            
+            # Rechte Spalte (Breite 9 von 12) für die RGB-Inputs
+            dbc.Col([
+                dbc.Row([
+                    dbc.Col([
+                        dbc.InputGroup([
+                            dbc.InputGroupText("Red"),
+                            dcc.Input(id='red_input', type='number', min=0, max=255, step=1, placeholder='255', className='form-control'),
+                        ], size="sm"),
+                    ], width=4),
                     
-                    html.Button('', id='color_output',
-                                disabled=True,
-                                style={'textAlign':'center', 'width':'50px', 'height':'50px', 'background-color':'white'}
-                                ),
-                ]),
-                dbc.Col([
-                    dbc.InputGroup([
-                        html.P('Red'),
-                        dcc.Input(id='red_input', type='number', min=0, max=255, step=1, placeholder='255'),
-                        ]),                   
-                    dbc.InputGroup([
-                        html.P('Green'),
-                        dcc.Input(id='green_input', type='number', min=0, max=255, step=1, placeholder='255'),
-                        ]),
-
-                    dbc.InputGroup([
-                        html.P('Blue'),
-                        dcc.Input(id='blue_input', type='number', min=0, max=255, step=1, placeholder='255'),
-                        ]),                                              
-                ]),
-            ]),
+                    dbc.Col([
+                        dbc.InputGroup([
+                            dbc.InputGroupText("Green"),
+                            dcc.Input(id='green_input', type='number', min=0, max=255, step=1, placeholder='255', className='form-control'),
+                        ], size="sm"),
+                    ], width=4),
+                    
+                    dbc.Col([
+                        dbc.InputGroup([
+                            dbc.InputGroupText("Blue"),
+                            dcc.Input(id='blue_input', type='number', min=0, max=255, step=1, placeholder='255', className='form-control'),
+                        ], size="sm"),
+                    ], width=4),
+                ], className="g-2"),
+            ], width=9),
+            
+        ], align="center"),
 ])
 
 @app.callback(

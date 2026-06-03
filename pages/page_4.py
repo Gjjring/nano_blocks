@@ -142,7 +142,7 @@ def make_threshold_image(hue_range, saturation_range, value_range):
     print('HSV LOWER: ', hsv_lower)
     print('HSV HIGHER: ', hsv_higher)
     print('np data shape: {}'.format(np_data.shape))
-    blurred_image = ski.filters.gaussian(np_data, sigma=1.0)
+    blurred_image = ski.filters.gaussian(np_data, sigma=2.0)
     print('blurred image shape: {}'.format(blurred_image.shape))
     hsv_image = ski.color.rgb2hsv(blurred_image)
 
@@ -151,7 +151,7 @@ def make_threshold_image(hue_range, saturation_range, value_range):
     except:
         binary_mask = np.zeros(np_data.shape[:2], dtype=bool)
         print ('BINARY MASK: ', binary_mask)
-    binary_mask = ski.filters.gaussian(binary_mask, sigma=3.0)
+    #binary_mask = ski.filters.gaussian(binary_mask, sigma=3.0)
     edge = 20
     half_edge = int(edge/2)
     ix, iy = binary_mask.shape

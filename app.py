@@ -7,7 +7,7 @@ Created on Fri Dec  5 22:15:41 2025
 # app.py
 
 import dash
-from dash import Dash, html, dcc, Input, Output, State, ctx, no_update
+from dash import Dash, html, dcc, Input, Output, State, ctx, no_update, callback
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
@@ -45,6 +45,7 @@ app.layout = html.Div(id = 'site', children = [
     dcc.Store(id='current-page-store', data = 1),
     dcc.Store(id='inner-tab-store', data='camera'),
     dcc.Store(id='blocked_tabs', data=False, storage_type='session'),
+    dcc.Store(id='dropdown-selection-store', data='btn-opt-a'),
 
     dcc.Store(id='initial-load-detector', data=False, storage_type='memory'),
     dcc.Location(id='url', refresh=False),
@@ -63,7 +64,15 @@ app.layout = html.Div(id = 'site', children = [
         ]),
         html.Div(id = 'anchor', children=[
             html.Div(dash.page_container, id = 'content-page'),
-            html.Button('Task Selection',id = 'task-selection-button'),
+            html.Div(id='menu-container', children = [
+                html.Button('Task Selection',id = 'task-selection-button'),
+                html.Div(id="custom-dropdown-menu", children=[
+                    html.Button("None", id="btn-opt-a", className="menu-item", n_clicks=0),
+                    html.Button("Task 1", id="btn-opt-b", className="menu-item", n_clicks=0),
+                    html.Button("Task 2", id="btn-opt-c", className="menu-item", n_clicks=0),
+                    html.Button("Task 3", id="btn-opt-d", className="menu-item", n_clicks=0),
+                ]),
+            ]),
         ]),
         
     ]),
@@ -159,6 +168,79 @@ app.clientside_callback(
     Input('url', 'pathname'),
     State('initial-load-detector', 'data'),
 )
+
+
+@callback(
+    Output("custom-dropdown-menu", "style"),
+    Input("task-selection-button", "n_clicks"),
+    State("custom-dropdown-menu", "style"),
+    prevent_initial_call=True
+)
+def toggle_dropdown(n_clicks, current_style):
+    if not current_style or current_style.get("display") == "none":
+        return {"display": "block"}
+    return {"display": "none"}
+
+
+@callback(
+    Output("dropdown-selection-store", "data"),
+    Output("custom-dropdown-menu", "style", allow_duplicate=True),
+    Input("btn-opt-a", "n_clicks"),
+    Input("btn-opt-b", "n_clicks"),
+    Input("btn-opt-c", "n_clicks"),
+    Input("btn-opt-d", "n_clicks"),
+    prevent_initial_call=True
+)
+def select_option(btn_a, btn_b, btn_c, btn_d):
+    triggered_id = ctx.triggered_id
+
+    if triggered_id == "btn-opt-a":
+        selected_value = "btn-opt-a"
+    elif triggered_id == "btn-opt-b":
+        selected_value = "btn-opt-b"
+    elif triggered_id == "btn-opt-c":
+        selected_value = "btn-opt-c"
+    elif triggered_id == "btn-opt-d":
+        selected_value = "btn-opt-d"
+    else:
+        selected_value = None
+
+    return selected_value, {"display": "none"}
+
+
+#laden der Task-Images
+@callback(
+    Output('camera-overlay-image', 'src'),
+    Output('camera-overlay-image', 'style'),
+    Input('dropdown-selection-store', 'data'),
+    prevent_initial_call=False
+)
+def update_overlay(selected_value):
+    base_style = {
+        'position': 'absolute', 'top': '0', 'left': '0', 
+        'width': '640px', 'height': '480px', 'zIndex': '10', 
+        'pointerEvents': 'none', 'display': 'none'
+    }
+    
+    if selected_value == "btn-opt-a":
+        base_style['display'] = 'block'
+        return '/assets/filter_a.png', base_style
+        
+    elif selected_value == "btn-opt-b":
+        base_style['display'] = 'block'
+        return '/assets/filter_b.png', base_style
+    
+    elif selected_value == "btn-opt-c":
+        base_style['display'] = 'block'
+        return '/assets/filter_c.png', base_style
+    
+    elif selected_value == "btn-opt-d":
+        base_style['display'] = 'block'
+        return '/assets/filter_d.png', base_style
+        
+    else:
+        return '', base_style
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=8050)

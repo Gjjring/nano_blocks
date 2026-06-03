@@ -50,7 +50,6 @@ button{
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
-    height: calc(100% - calc(40px + 5%));
 }
 
 #anchor{
@@ -61,8 +60,18 @@ button{
     flex-direction: column;
 }
 
-#task-selection-button{
+#menu-container {
     position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; 
+}
+
+#task-selection-button{
+    position: static;
     top: 10px;
     right: 5%;
     z-index: 9999;
@@ -70,7 +79,38 @@ button{
     color: white;
     box-shadow: 0 4px 6px rgba(0,0,0,0.15);
     cursor: pointer;
-    
+    margin: 0;
+    padding: 10px 15px;
+}
+
+#custom-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: white;
+    min-width: 360px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    border-radius: 4px;
+    padding: 5px 0;
+    margin-top: 5px;
+}
+
+.menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 15px;
+    margin: 0;
+    background: none;
+    color: #333;
+    border-radius: 0;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.menu-item:hover {
+    background-color: #f1f1f1;
 }
 
 #page-tabs{
@@ -84,7 +124,6 @@ button{
     padding: 20px;
     overflow-y: auto;
     width: 100%;
-    margin-top: 40px;
 }
 
 #navigation{
@@ -92,7 +131,6 @@ button{
     align-items: center;
     border-top: 1px solid black;
     width: 100%;
-    bottom: 0px;
     height: calc(40px + 5%);
     flex-shrink: 0;
 }
@@ -110,9 +148,11 @@ button{
 #camera-container{
     display: flex;
     flex-direction: row;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
 }
-
 
 #drawing-area{
     width: 640px;
