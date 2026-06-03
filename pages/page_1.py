@@ -25,29 +25,34 @@ server = app.server
 
 layout = html.Div([
     dcc.Tabs(id='image-tabs', value='camera', children=[
-
         dcc.Tab(label='Camera', value='camera', children=[
             html.H3('Camera Stream'),
             html.Div(id = 'camera-container', children = [
                 html.Div([
                 html.Video(id='video', width='640', height='480', autoPlay=True,
-                       style={'border': '1px solid black'}),
+                       style={'border': '1px solid black',
+                              'position':'absolute', 'top': '120px', 'left': '160px', 'zIndex': '2'}),
 
                 html.Div(id='camera-flash', style={
                 'position': 'absolute',
-                'top': '0', 'left': '0', 'width': '640px', 'height': '480px',
+                'top': '120px', 'left': '160px', 'width': '640px', 'height': '480px',
                 'backgroundColor': 'white',
                 'opacity': '0',
                 'pointerEvents': 'none',
-                'transition': 'opacity 0.1s ease-out'
-                })
-            ], style={'position': 'relative', 'display': 'inline-block'}),
-            html.Div(id='camera-controls', children=[
-                html.Button('Capture', id='capture-btn', n_clicks=0),
-                html.Div([
-                    html.Img(id='capture-preview')
-                ], style={'display': 'inline-block'}),
-                ])
+                'transition': 'opacity 0.1s ease-out',
+                'zIndex': '3'
+                }),
+                html.Img(id='camera-overlay-image', style={
+                    'position': 'absolute', 'top': '0', 'left': '0',
+                    'width': '960px', 'height': '720px', 'zIndex': '1',
+                    'pointerEvents': 'none', 'display': 'none'
+                }),
+            ], style={'position': 'relative', 'display': 'inline-block',
+                      'width': '960px', 'height': '720px'}),
+            html.Button('Capture', id='capture-btn', n_clicks=0),
+            html.Div([
+                html.Img(id='capture-preview')
+            ], style={'display': 'inline-block'}),
             ])
         ]),
 
@@ -89,15 +94,15 @@ layout = html.Div([
                 
             
             html.Button(
-                'Bild speichern', 
-                id='btn-download', 
-                n_clicks=0, 
+                'Bild speichern',
+                id='btn-download',
+                n_clicks=0,
                 style={
-                    'backgroundColor': '#28a745', 
-                    'color': 'white', 
-                    'border': 'none', 
-                    'padding': '12px 25px', 
-                    'borderRadius': '5px', 
+                    'backgroundColor': '#28a745',
+                    'color': 'white',
+                    'border': 'none',
+                    'padding': '12px 25px',
+                    'borderRadius': '5px',
                     'cursor': 'pointer',
                     'fontSize': '16px',
                     'marginTop': '20px',
@@ -134,7 +139,7 @@ app.clientside_callback(
     ),
     Output('camera-start-dummy', 'children'),
     Input('current-page-store', 'data'),
-    Input('inner-tab-store', 'data'), 
+    Input('inner-tab-store', 'data'),
     prevent_initial_call=True
 )
 
@@ -153,7 +158,7 @@ app.clientside_callback(
 def upload_image():
     data = request.get_json(force=True)
     image_data = data.get('image')
-    
+
     if not image_data:
         return jsonify({'message': 'No image provided'}), 400
 
@@ -168,7 +173,7 @@ def upload_image():
         stored = session.get('saved_images', [])
         stored.append({
             'id': id_val,
-            'image': image_data, 
+            'image': image_data,
             'timestamp': current_time.isoformat()
         })
         session['saved_images'] = stored
@@ -176,8 +181,8 @@ def upload_image():
     except Exception as exp:
         print(str(exp))
         return jsonify({'message': f'{str(exp)}'}), 400
-    
-   
+
+
     stored = session.get('saved_images', [])
     print(f'N stored images: {len(stored)}')
     return jsonify({'message': f'Image saved as {id_val}'})
@@ -198,21 +203,21 @@ def update_preview_src(image_data_uri):
 
     current_time = datetime.now()
     id_val = current_time.strftime('%Y%m%d%H%M%S%f')
-    
+
     stored = session.get('saved_images', [])
     stored.append({
         'id': id_val,
-        'image': image_data_uri, 
+        'image': image_data_uri,
         'timestamp': current_time.isoformat()
     })
     session['saved_images'] = stored
     session.modified = True
-    
+
     print(f'N stored images: {len(stored)}')
 
     visible_style = {
-        'width': '150px', 
-        'height': '112px', 
+        'width': '150px',
+        'height': '112px',
         'objectFit': 'cover',
         'border': '2px solid #fff',
         'boxShadow': '0 0 8px rgba(0,0,0,0.3)',
@@ -263,7 +268,7 @@ def update_canvas(selected_shape, relayout_data, current_figure):
         fig.update_layout(
             plot_bgcolor='white',
             margin=dict(l=0, r=0, t=0, b=0),
-            
+
             width=640,
             height=480
         )
@@ -278,7 +283,7 @@ def update_canvas(selected_shape, relayout_data, current_figure):
         fillcolor='blue',
         line=dict(color='blue', width=2)
     )
-    
+
     return fig
 
 @app.callback(
@@ -296,7 +301,7 @@ def save_drawn_canvas_to_session(n_clicks, current_figure):
     canvas = ImageDraw.Draw(img)
 
     shapes = current_figure.get('layout', {}).get('shapes', [])
-    
+
     if not shapes:
         raise PreventUpdate
 
@@ -326,14 +331,50 @@ def save_drawn_canvas_to_session(n_clicks, current_figure):
 
     current_time = datetime.now()
     id_val = current_time.strftime('%Y%m%d%H%M%S%f')
-    
+
     stored = session.get('saved_images', [])
     stored.append({
         'id': id_val,
-        'image': image_data_uri, 
+        'image': image_data_uri,
         'timestamp': current_time.isoformat()
     })
     session['saved_images'] = stored
     session.modified = True
-    
+
     return image_data_uri
+
+#laden der Task-Images
+@app.callback(
+    Output('camera-overlay-image', 'src'),
+    Output('camera-overlay-image', 'style'),
+    Input('dropdown-selection-store', 'data'),
+    prevent_initial_call=False
+)
+def update_overlay(selected_value):
+    base_style = {
+        'position': 'absolute', 'top': '0', 'left': '0',
+        'width': '960px', 'height': '720px', 'zIndex': '10',
+        'pointerEvents': 'none', 'display': 'block',
+    }
+    print("update_overlay called with selected_value:", selected_value)
+
+    if selected_value == "btn-opt-a":
+        base_style['display'] = 'block'
+        return '/assets/aufgabe0.png', base_style
+
+    elif selected_value == "btn-opt-b":
+        base_style['display'] = 'block'
+        print("returning src /assets/aufgabe1.png")
+        print("returning style:", base_style)
+        return '/assets/aufgabe1.png', base_style
+
+    elif selected_value == "btn-opt-c":
+        base_style['display'] = 'block'
+        return '/assets/filter_c.png', base_style
+
+    elif selected_value == "btn-opt-d":
+        base_style['display'] = 'block'
+        return '/assets/filter_d.png', base_style
+
+    else:
+        return '', base_style
