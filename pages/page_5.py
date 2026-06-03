@@ -36,7 +36,8 @@ layout = html.Div([
     dcc.Loading(
         type="circle",
         children=[
-            dcc.Graph(id = 'jcm_output', style={"height": "900px"}),
+            dcc.Graph(id = 'jcm_mesh_output', style={"height": "900px", "display": "block"}),
+            dcc.Graph(id = 'jcm_intensity_output', style={"height": "900px", "display": "none"}),
         ]
     ),
 ])
@@ -67,6 +68,8 @@ def run_jcmwave_simulation(threshold_data):
     keys['wg_displacement_right'] = 1
     keys['wg_stub_length'] = 1.
     keys['boundary_id'] = 1
+    keys['air_slc'] = 0.25
+    keys['dielectric_slc'] = 0.5/3.5
     keys['vacuum_wavelength'] = 500e-9
     keys['in_port_fields_path'] = os.path.abspath(os.path.join("jcmwave2", "1D", "project_results", "fieldbag.jcm"))
 
@@ -134,6 +137,7 @@ def run_jcmwave_simulation(threshold_data):
             os.path.join("jcmwave2", "2D","project_results", "field.jcm")
         )
         grid_tables = jcmwave.loadtable(os.path.join("jcmwave2", "2D", "grid_table.jcm"))
+        is_updated = False
     else:
         jcmwave.geo(os.path.join("jcmwave2", "2D"), keys=keys)
         jcmwave.solve(os.path.join("jcmwave2", "1D","project.jcmpt"), keys=keys)
@@ -141,16 +145,29 @@ def run_jcmwave_simulation(threshold_data):
         session['simulation_hash'] = hash_value
         cart_field = results[1]
         grid_tables = results[2]
+        is_updated = True
 
     e_field = np.linalg.norm(np.abs(cart_field['field'][0]), axis=2)**2
 
-    return e_field, grid_tables
+    return e_field, grid_tables, is_updated
 
 def make_field_data_plot(field_data):
     zmax = np.max([np.max(field_data)*0.9, 1.0])
     fig = px.imshow(field_data.T, origin="lower",
                     zmin=0., zmax=zmax,
                     color_continuous_scale="turbo")
+
+    fig.update_layout(coloraxis_showscale=False)
+    fig.update_xaxes(showticklabels=False)
+    fig.update_yaxes(showticklabels=False)
+
+    fig.update_layout(
+        height=900,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+    )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
     return fig
 
 def make_grid_plot(grid_tables):
@@ -259,11 +276,37 @@ def make_grid_plot(grid_tables):
     # keep aspect ratio
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     #fig.update_yaxes(scaleanchor="x", scaleratio=1)
+
+    fig.update_layout(coloraxis_showscale=False)
+    fig.update_xaxes(showticklabels=False)
+    fig.update_yaxes(showticklabels=False)
+
+    fig.update_layout(
+        height=900,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+    )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
     return fig
 
 
+@app.callback([Output(component_id='jcm_mesh_output', component_property= 'style'),
+               Output(component_id='jcm_intensity_output', component_property= 'style')
+              ],
+              [Input("plot-type-dropdown", "value"),
+                ])
+def swap_displayed_data(plot_type):
+    if plot_type == "Simulation Mesh":
+        return {"height": "900px", "display": "block"}, {"height": "900px", "display": "none"}
+    elif plot_type == "Intensity":
+        return {"height": "900px", "display": "none"}, {"height": "900px", "display": "block"}
+    else:
+        raise PreventUpdate()
 
-@app.callback([Output(component_id='jcm_output', component_property= 'figure'),
+@app.callback([Output(component_id='jcm_mesh_output', component_property= 'figure'),
+               Output(component_id='jcm_intensity_output', component_property= 'figure')
               ],
               [Input("current-page-store", "data"),
                Input("plot-type-dropdown", "value"),
@@ -288,25 +331,12 @@ def make_jcmwave_simulation(data, plot_type):
             print(ii, np.min(threshold_data), np.max(threshold_data))
 
 
-        field_data, grid_tables = run_jcmwave_simulation(threshold_data)
-        if plot_type == "Simulation Mesh":
-            fig = make_grid_plot(grid_tables)
-        elif plot_type == "Intensity":
-            fig = make_field_data_plot(field_data)
+        field_data, grid_tables, is_updated = run_jcmwave_simulation(threshold_data)
+        if is_updated:
+            fig1 = make_grid_plot(grid_tables)
+            fig2 = make_field_data_plot(field_data)
         else:
             raise PreventUpdate()
 
-    fig.update_layout(coloraxis_showscale=False)
-    fig.update_xaxes(showticklabels=False)
-    fig.update_yaxes(showticklabels=False)
 
-    fig.update_layout(
-        height=900,
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-    )
-    fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(showgrid=False)
-
-
-    return [fig]
+    return [fig1, fig2]
