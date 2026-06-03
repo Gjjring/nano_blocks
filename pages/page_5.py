@@ -36,10 +36,25 @@ layout = html.Div([
     dcc.Loading(
         type='circle',
         children=[
-            dcc.Graph(id = 'jcm_output', style={'height': '900px'}),
+            dcc.Graph(id = 'jcm_mesh_output', style={"height": "900px", "display": "block"}),
+            dcc.Graph(id = 'jcm_intensity_output', style={"height": "900px", "display": "none"}),
         ]
     ),
 ])
+
+def order_lexicographically(points, start=0.0, return_sort_indices=False):
+    angle = np.angle( (points[:,0]+1j*points[:,1])*np.exp(1j*(np.pi+1e-3+start)))
+    angle = np.round(angle, 3)
+    radius = np.linalg.norm(points, axis=1)
+    angle[np.isclose(radius, 0.)] = -np.pi
+    sort_indices = np.lexsort((radius, angle))
+    #sort_indices = np.argsort(angle)
+    all_data = np.round(np.vstack([points.T, angle, radius]).T, 3)
+    if return_sort_indices:
+        return points[sort_indices, :], sort_indices
+    else:
+        return points[sort_indices, :]
+
 
 def run_jcmwave_simulation(threshold_data):
     keys = {}
@@ -53,6 +68,8 @@ def run_jcmwave_simulation(threshold_data):
     keys['wg_displacement_right'] = 1
     keys['wg_stub_length'] = 1.
     keys['boundary_id'] = 1
+    keys['air_slc'] = 0.25
+    keys['dielectric_slc'] = 0.5/3.5
     keys['vacuum_wavelength'] = 500e-9
     keys['in_port_fields_path'] = os.path.abspath(os.path.join('jcmwave2', '1D', 'project_results', 'fieldbag.jcm'))
 
@@ -70,26 +87,43 @@ def run_jcmwave_simulation(threshold_data):
     for contour in contours:
         p = shapely.Polygon(contour)
         if p.area > 1000:
-            big_poly = p
-
-
             p2 = p.simplify(1)
+            keys['polygons'].append(p2)
 
-            c = np.array(p2.exterior.coords)
-            c = c[:-1, :]
-            c[:, 1] = image_height-c[:, 1]
-            mid_point = np.tile(np.mean(c, axis=0), c.shape[0]).reshape(c.shape)
+    # determine nesting level which will be used to set polygon domain Id in jcm file.
+    nesting_levels = {}
+    for i, poly in enumerate(keys['polygons']):
+        nesting_levels[i] = 0
+        for j, other_poly in enumerate(keys['polygons']):
+            if i != j and poly.within(other_poly):
+                nesting_levels[i] += 1
 
-            keys['polygons'].append(np.ceil(c))
+    # convert to numpy arrays and flip y axis to match jcmwave coordinate system where y increases upwards
+    np_polys = []
+    for i, poly in enumerate(keys['polygons']):
+        c = np.array(poly.exterior.coords)
+        c = c[:-1, :]
+        c[:, 1] = image_height-c[:, 1]
+        np_polys.append(np.ceil(c))
+    keys['polygons'] = np_polys
 
+    # order the vertices in couterclockwise order starting from the point with the smallest angle to the x-axis
+    for i, poly in enumerate(keys['polygons']):
+        c = poly
+        mid_point = np.tile(np.mean(c, axis=0), c.shape[0]).reshape(c.shape)
+        c -= mid_point
+        c = order_lexicographically(c)
+        c += mid_point
+        keys['polygons'][i] = c
+
+    # now convert the coordinates from pixel coordinates to physical coordinates in micrometers.
     for polygon in keys['polygons']:
         print('polygon ymin: {}, ymax: {}, x min: {}, x max: {}'.format(np.min(polygon[:, 1]), np.max(polygon[:, 1]), np.min(polygon[:, 0]), np.max(polygon[:, 0])))
         polygon[:, 0] = (polygon[:, 0]- (half_buffer+1) )/ (image_width_without_buffer-1) * keys['user_area_width'] + 1 - keys['cd_width']/2
         #polygon[:, 0] = (polygon[:, 0]- half_buffer )/ image_width_without_buffer * keys['user_area_width'] + 1 - keys['cd_width']/2
         polygon[:, 1] = (polygon[:, 1]- (half_buffer+1) )/ (image_height_without_buffer-1) * keys['user_area_height'] + 1 - keys['cd_height']/2
 
-
-
+    keys['polygons'] = list(zip(keys['polygons'], nesting_levels.values()))
 
     jcmwave.jcmt2jcm(os.path.join('jcmwave2', '2D', 'layout.jcmt'), keys=keys)
     with open(os.path.join('jcmwave2', '2D', 'layout.jcm'), encoding='utf-8') as f:
@@ -102,7 +136,8 @@ def run_jcmwave_simulation(threshold_data):
         cart_field = jcmwave.loadcartesianfields(
             os.path.join('jcmwave2', '2D','project_results', 'field.jcm')
         )
-        grid_tables = jcmwave.loadtable(os.path.join('jcmwave2', '2D', 'grid_table.jcm'))
+        grid_tables = jcmwave.loadtable(os.path.join("jcmwave2", "2D", "grid_table.jcm"))
+        is_updated = False
     else:
         jcmwave.geo(os.path.join('jcmwave2', '2D'), keys=keys)
         jcmwave.solve(os.path.join('jcmwave2', '1D','project.jcmpt'), keys=keys)
@@ -110,16 +145,29 @@ def run_jcmwave_simulation(threshold_data):
         session['simulation_hash'] = hash_value
         cart_field = results[1]
         grid_tables = results[2]
+        is_updated = True
 
     e_field = np.linalg.norm(np.abs(cart_field['field'][0]), axis=2)**2
 
-    return e_field, grid_tables
+    return e_field, grid_tables, is_updated
 
 def make_field_data_plot(field_data):
     zmax = np.max([np.max(field_data)*0.9, 1.0])
     fig = px.imshow(field_data.T, origin='lower',
                     zmin=0., zmax=zmax,
-                    color_continuous_scale='turbo')
+                    color_continuous_scale="turbo")
+
+    fig.update_layout(coloraxis_showscale=False)
+    fig.update_xaxes(showticklabels=False)
+    fig.update_yaxes(showticklabels=False)
+
+    fig.update_layout(
+        height=900,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+    )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
     return fig
 
 def make_grid_plot(grid_tables):
@@ -226,13 +274,39 @@ def make_grid_plot(grid_tables):
     fig.update_yaxes(range=[ymin - pad, ymax + pad])
 
     # keep aspect ratio
-    fig.update_yaxes(scaleanchor='x', scaleratio=1)
-    #fig.update_yaxes(scaleanchor='x', scaleratio=1)
+    fig.update_yaxes(scaleanchor="x", scaleratio=1)
+    #fig.update_yaxes(scaleanchor="x", scaleratio=1)
+
+    fig.update_layout(coloraxis_showscale=False)
+    fig.update_xaxes(showticklabels=False)
+    fig.update_yaxes(showticklabels=False)
+
+    fig.update_layout(
+        height=900,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+    )
+    fig.update_xaxes(showgrid=False)
+    fig.update_yaxes(showgrid=False)
+
     return fig
 
 
+@app.callback([Output(component_id='jcm_mesh_output', component_property= 'style'),
+               Output(component_id='jcm_intensity_output', component_property= 'style')
+              ],
+              [Input("plot-type-dropdown", "value"),
+                ])
+def swap_displayed_data(plot_type):
+    if plot_type == "Simulation Mesh":
+        return {"height": "900px", "display": "block"}, {"height": "900px", "display": "none"}
+    elif plot_type == "Intensity":
+        return {"height": "900px", "display": "none"}, {"height": "900px", "display": "block"}
+    else:
+        raise PreventUpdate()
 
-@app.callback([Output(component_id='jcm_output', component_property= 'figure'),
+@app.callback([Output(component_id='jcm_mesh_output', component_property= 'figure'),
+               Output(component_id='jcm_intensity_output', component_property= 'figure')
               ],
               [Input('current-page-store', 'data'),
                Input('plot-type-dropdown', 'value'),
@@ -257,25 +331,12 @@ def make_jcmwave_simulation(data, plot_type):
             print(ii, np.min(threshold_data), np.max(threshold_data))
 
 
-        field_data, grid_tables = run_jcmwave_simulation(threshold_data)
-        if plot_type == 'Simulation Mesh':
-            fig = make_grid_plot(grid_tables)
-        elif plot_type == 'Intensity':
-            fig = make_field_data_plot(field_data)
+        field_data, grid_tables, is_updated = run_jcmwave_simulation(threshold_data)
+        if is_updated:
+            fig1 = make_grid_plot(grid_tables)
+            fig2 = make_field_data_plot(field_data)
         else:
             raise PreventUpdate()
 
-    fig.update_layout(coloraxis_showscale=False)
-    fig.update_xaxes(showticklabels=False)
-    fig.update_yaxes(showticklabels=False)
 
-    fig.update_layout(
-        height=900,
-        plot_bgcolor='white',
-        paper_bgcolor='white',
-    )
-    fig.update_xaxes(showgrid=False)
-    fig.update_yaxes(showgrid=False)
-
-
-    return [fig]
+    return [fig1, fig2]

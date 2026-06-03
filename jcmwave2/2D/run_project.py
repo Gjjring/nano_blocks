@@ -11,7 +11,8 @@ keys['wg_stub_length'] = 1.
 keys['boundary_id'] = 1
 keys['vacuum_wavelength'] = 500e-9
 keys['polygons'] = []
-
+keys['dielectric_slc'] = 0.25/3.5
+keys['air_slc'] = 0.25
 
 """
 physical area of the user defined geometry is 1.0 to 4.0 micrometers high and
