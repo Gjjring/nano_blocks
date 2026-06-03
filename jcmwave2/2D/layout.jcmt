@@ -125,14 +125,16 @@ for poly in keys['polygons']:
   nesting_level = poly[1]
   if nesting_level % 2 == 0:
       keys['current_domain_id'] = 2
+      keys['current_slc'] = keys['dielectric_slc']
   else:
       keys['current_domain_id'] = 1
+      keys['current_slc'] = keys['air_slc']
   ?>
     Polygon {
       DomainId = %(current_domain_id)d
       Points = %(current_points)e
       MeshOptions {
-        MaximumSideLength = %(dielectric_slc)3f
+        MaximumSideLength = %(current_slc)3f
       }
     }
 <?
