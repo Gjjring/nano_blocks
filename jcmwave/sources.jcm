@@ -32,7 +32,7 @@ SourceBag {
       PlaneWave {        
         3DTo2D = yes
         Incidence = FromAbove
-        Lambda0 = 100e-9
+        Lambda0 = 500e-9
         SP = [0 1]
         ThetaPhi = [0 0]
       }

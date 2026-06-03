@@ -9,5 +9,5 @@ Material {
   DomainId = 2
   Name = "Scatterer"
   RelPermeability = 1.
-  RelPermittivity = 9.
+  RelPermittivity = 12.25
 }
