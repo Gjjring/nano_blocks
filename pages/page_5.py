@@ -20,7 +20,7 @@ import shapely
 import hashlib
 import jcmwave
 
-dash.register_page(__name__, path = "/page_5")
+dash.register_page(__name__, path = '/page_5')
 app = dash.get_app()
 server = app.server
 
@@ -31,12 +31,12 @@ layout = html.Div([
         options=['Simulation Mesh', 'Intensity'],
         value='Simulation Mesh',
         id='plot-type-dropdown',
-        style={"width": "300px", "margin": "0 auto"}
+        style={'width': '300px', 'margin': '0 auto'}
     ),
     dcc.Loading(
-        type="circle",
+        type='circle',
         children=[
-            dcc.Graph(id = 'jcm_output', style={"height": "900px"}),
+            dcc.Graph(id = 'jcm_output', style={'height': '900px'}),
         ]
     ),
 ])
@@ -54,7 +54,7 @@ def run_jcmwave_simulation(threshold_data):
     keys['wg_stub_length'] = 1.
     keys['boundary_id'] = 1
     keys['vacuum_wavelength'] = 500e-9
-    keys['in_port_fields_path'] = os.path.abspath(os.path.join("jcmwave2", "1D", "project_results", "fieldbag.jcm"))
+    keys['in_port_fields_path'] = os.path.abspath(os.path.join('jcmwave2', '1D', 'project_results', 'fieldbag.jcm'))
 
     image_width = threshold_data.shape[1]
     image_height = threshold_data.shape[0]
@@ -63,9 +63,9 @@ def run_jcmwave_simulation(threshold_data):
     image_width_without_buffer = image_width - image_buffer
     image_height_without_buffer = image_height - image_buffer
     keys['polygons'] = []
-    print("image shape: {}".format(threshold_data.shape))
-    print("image dimensions: {} x {}".format(image_width, image_height))
-    print("image width without buffer: {}, image height without buffer: {}".format(image_width_without_buffer, image_height_without_buffer))
+    print('image shape: {}'.format(threshold_data.shape))
+    print('image dimensions: {} x {}'.format(image_width, image_height))
+    print('image width without buffer: {}, image height without buffer: {}'.format(image_width_without_buffer, image_height_without_buffer))
     contours = ski.measure.find_contours(threshold_data.T, 0.5)
     for contour in contours:
         p = shapely.Polygon(contour)
@@ -83,7 +83,7 @@ def run_jcmwave_simulation(threshold_data):
             keys['polygons'].append(np.ceil(c))
 
     for polygon in keys['polygons']:
-        print("polygon ymin: {}, ymax: {}, x min: {}, x max: {}".format(np.min(polygon[:, 1]), np.max(polygon[:, 1]), np.min(polygon[:, 0]), np.max(polygon[:, 0])))
+        print('polygon ymin: {}, ymax: {}, x min: {}, x max: {}'.format(np.min(polygon[:, 1]), np.max(polygon[:, 1]), np.min(polygon[:, 0]), np.max(polygon[:, 0])))
         polygon[:, 0] = (polygon[:, 0]- (half_buffer+1) )/ (image_width_without_buffer-1) * keys['user_area_width'] + 1 - keys['cd_width']/2
         #polygon[:, 0] = (polygon[:, 0]- half_buffer )/ image_width_without_buffer * keys['user_area_width'] + 1 - keys['cd_width']/2
         polygon[:, 1] = (polygon[:, 1]- (half_buffer+1) )/ (image_height_without_buffer-1) * keys['user_area_height'] + 1 - keys['cd_height']/2
@@ -91,22 +91,22 @@ def run_jcmwave_simulation(threshold_data):
 
 
 
-    jcmwave.jcmt2jcm(os.path.join("jcmwave2", "2D", "layout.jcmt"), keys=keys)
-    with open(os.path.join("jcmwave2", "2D", "layout.jcm"), encoding="utf-8") as f:
+    jcmwave.jcmt2jcm(os.path.join('jcmwave2', '2D', 'layout.jcmt'), keys=keys)
+    with open(os.path.join('jcmwave2', '2D', 'layout.jcm'), encoding='utf-8') as f:
         text = f.read()
-    hash_value = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    hash_value = hashlib.sha256(text.encode('utf-8')).hexdigest()
 
-    #jcmwave.geo(".")
+    #jcmwave.geo('.')
 
-    if "simulation_hash" in session and hash_value == session['simulation_hash']:
+    if 'simulation_hash' in session and hash_value == session['simulation_hash']:
         cart_field = jcmwave.loadcartesianfields(
-            os.path.join("jcmwave2", "2D","project_results", "field.jcm")
+            os.path.join('jcmwave2', '2D','project_results', 'field.jcm')
         )
-        grid_tables = jcmwave.loadtable(os.path.join("jcmwave2", "2D", "grid_table.jcm"))
+        grid_tables = jcmwave.loadtable(os.path.join('jcmwave2', '2D', 'grid_table.jcm'))
     else:
-        jcmwave.geo(os.path.join("jcmwave2", "2D"), keys=keys)
-        jcmwave.solve(os.path.join("jcmwave2", "1D","project.jcmpt"), keys=keys)
-        results = jcmwave.solve(os.path.join("jcmwave2", "2D","project.jcmpt"), keys=keys)
+        jcmwave.geo(os.path.join('jcmwave2', '2D'), keys=keys)
+        jcmwave.solve(os.path.join('jcmwave2', '1D','project.jcmpt'), keys=keys)
+        results = jcmwave.solve(os.path.join('jcmwave2', '2D','project.jcmpt'), keys=keys)
         session['simulation_hash'] = hash_value
         cart_field = results[1]
         grid_tables = results[2]
@@ -117,9 +117,9 @@ def run_jcmwave_simulation(threshold_data):
 
 def make_field_data_plot(field_data):
     zmax = np.max([np.max(field_data)*0.9, 1.0])
-    fig = px.imshow(field_data.T, origin="lower",
+    fig = px.imshow(field_data.T, origin='lower',
                     zmin=0., zmax=zmax,
-                    color_continuous_scale="turbo")
+                    color_continuous_scale='turbo')
     return fig
 
 def make_grid_plot(grid_tables):
@@ -150,9 +150,9 @@ def make_grid_plot(grid_tables):
     #         go.Scatter(
     #             x=np.r_[pts[:, 0], pts[0, 0]],
     #             y=np.r_[pts[:, 1], pts[0, 1]],
-    #             fill="toself",
-    #             mode="lines",
-    #             line=dict(color="black"),
+    #             fill='toself',
+    #             mode='lines',
+    #             line=dict(color='black'),
     #             fillcolor=palette[c % len(palette)],
     #             showlegend=False
     #         )
@@ -172,8 +172,8 @@ def make_grid_plot(grid_tables):
             go.Scatter(
                 x=xs,
                 y=ys,
-                mode="lines",
-                fill="toself",
+                mode='lines',
+                fill='toself',
                 fillcolor=color_map[color_id],
                 line=dict(width=1),
                 showlegend=False
@@ -208,10 +208,10 @@ def make_grid_plot(grid_tables):
         go.Scatter(
             x=edge_x,
             y=edge_y,
-            mode="lines",
-            line=dict(color="black", width=0.5),
+            mode='lines',
+            line=dict(color='black', width=0.5),
             showlegend=False,
-            hoverinfo="skip",
+            hoverinfo='skip',
         )
     )
 
@@ -226,41 +226,41 @@ def make_grid_plot(grid_tables):
     fig.update_yaxes(range=[ymin - pad, ymax + pad])
 
     # keep aspect ratio
-    fig.update_yaxes(scaleanchor="x", scaleratio=1)
-    #fig.update_yaxes(scaleanchor="x", scaleratio=1)
+    fig.update_yaxes(scaleanchor='x', scaleratio=1)
+    #fig.update_yaxes(scaleanchor='x', scaleratio=1)
     return fig
 
 
 
 @app.callback([Output(component_id='jcm_output', component_property= 'figure'),
               ],
-              [Input("current-page-store", "data"),
-               Input("plot-type-dropdown", "value"),
+              [Input('current-page-store', 'data'),
+               Input('plot-type-dropdown', 'value'),
                 ])
 def make_jcmwave_simulation(data, plot_type):
-    print("make_jcmwave_simulation was called")
-    print("Value of data: ", data, type(data))
+    print('make_jcmwave_simulation was called')
+    print('Value of data: ', data, type(data))
     if data is None:
         raise PreventUpdate()
     elif not data == 5:
         raise PreventUpdate()
     else:
         try:
-            threshold_data = session["current_threshold_image"]
-            print("Reached")
+            threshold_data = session['current_threshold_image']
+            print('Reached')
         except:
             raise PreventUpdate()
 
 
-        print("img data shape: {}".format(threshold_data.shape))
+        print('img data shape: {}'.format(threshold_data.shape))
         for ii in range(1):
             print(ii, np.min(threshold_data), np.max(threshold_data))
 
 
         field_data, grid_tables = run_jcmwave_simulation(threshold_data)
-        if plot_type == "Simulation Mesh":
+        if plot_type == 'Simulation Mesh':
             fig = make_grid_plot(grid_tables)
-        elif plot_type == "Intensity":
+        elif plot_type == 'Intensity':
             fig = make_field_data_plot(field_data)
         else:
             raise PreventUpdate()
@@ -271,8 +271,8 @@ def make_jcmwave_simulation(data, plot_type):
 
     fig.update_layout(
         height=900,
-        plot_bgcolor="white",
-        paper_bgcolor="white",
+        plot_bgcolor='white',
+        paper_bgcolor='white',
     )
     fig.update_xaxes(showgrid=False)
     fig.update_yaxes(showgrid=False)

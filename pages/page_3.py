@@ -18,7 +18,7 @@ import skimage as ski
 import shapely
 import jcmwave
 
-dash.register_page(__name__, path = "/page_3")
+dash.register_page(__name__, path = '/page_3')
 app = dash.get_app()
 server = app.server
 
@@ -32,27 +32,27 @@ layout = html.Div([
                     html.Button(
                         '', id='temporary_color_output',
                         disabled=True,
-                        style={'textAlign':'center', 'width':"50px", "height":"50px", "background-color":"white"}
+                        style={'textAlign':'center', 'width':'50px', 'height':'50px', 'background-color':'white'}
                     ),
                     
                     html.Button('', id='color_output',
                                 disabled=True,
-                                style={'textAlign':'center', 'width':"50px", "height":"50px", "background-color":"white"}
+                                style={'textAlign':'center', 'width':'50px', 'height':'50px', 'background-color':'white'}
                                 ),
                 ]),
                 dbc.Col([
                     dbc.InputGroup([
-                        html.P("Red"),
-                        dcc.Input(id='red_input', type='number', min=0, max=255, step=1, placeholder="255"),
+                        html.P('Red'),
+                        dcc.Input(id='red_input', type='number', min=0, max=255, step=1, placeholder='255'),
                         ]),                   
                     dbc.InputGroup([
-                        html.P("Green"),
-                        dcc.Input(id='green_input', type='number', min=0, max=255, step=1, placeholder="255"),
+                        html.P('Green'),
+                        dcc.Input(id='green_input', type='number', min=0, max=255, step=1, placeholder='255'),
                         ]),
 
                     dbc.InputGroup([
-                        html.P("Blue"),
-                        dcc.Input(id='blue_input', type='number', min=0, max=255, step=1, placeholder="255"),
+                        html.P('Blue'),
+                        dcc.Input(id='blue_input', type='number', min=0, max=255, step=1, placeholder='255'),
                         ]),                                              
                 ]),
             ]),
@@ -63,7 +63,7 @@ layout = html.Div([
     Input('camera-start-dummy', 'id') # Fires instantly on page load because this element renders
 )
 def load_selected_image_into_graph(_):
-    current_raw_image = session.get("current_raw_image", None)
+    current_raw_image = session.get('current_raw_image', None)
     
     if current_raw_image is None:
         # If no image has been processed yet, return an empty figure placeholder
@@ -78,7 +78,7 @@ def load_selected_image_into_graph(_):
 
 
 def make_color(r=0,g=0,b=0):
-    color_str = "rgb({}, {}, {})".format(r,g,b)
+    color_str = 'rgb({}, {}, {})'.format(r,g,b)
     return color_str
     
 @dash.callback(Output(component_id='temporary_color_output', component_property= 'style'),
@@ -93,7 +93,7 @@ def update_temporary_color_state(hover_data):
         green = color['1']
         blue = color['2']
         color = make_color(red, green, blue)
-        style = {'textAlign':'center', 'width':"50px", "height":"50px", "background-color":color}
+        style = {'textAlign':'center', 'width':'50px', 'height':'50px', 'background-color':color}
         return style
 
 @dash.callback(Output(component_id='color_output', component_property= 'style'),
@@ -105,7 +105,7 @@ def update_temporary_color_state(hover_data):
 def color_box_update(red, green, blue):
     color = make_color(red, green, blue)
     print(color)
-    style = {'textAlign':'center', 'width':"50px", "height":"50px", "background-color":color}
+    style = {'textAlign':'center', 'width':'50px', 'height':'50px', 'background-color':color}
     data = [red, green, blue]
     return style, data
 

@@ -19,7 +19,7 @@ import skimage as ski
 import shapely
 import jcmwave
 
-dash.register_page(__name__, path = "/page_4")
+dash.register_page(__name__, path = '/page_4')
 app = dash.get_app()
 server = app.server
 
@@ -28,7 +28,7 @@ layout = html.Div([
 
             dbc.Row([
                 dbc.Col([
-                        html.P("Hue", id="hue_label"),
+                        html.P('Hue', id='hue_label'),
                     ],
                     width=1
                     ),
@@ -38,11 +38,11 @@ layout = html.Div([
                     width=7
                     ),
                 ],
-                justify="center"
+                justify='center'
             ),
             dbc.Row([
                 dbc.Col([
-                        html.P("Saturation", id="saturation_label"),
+                        html.P('Saturation', id='saturation_label'),
                     ],
                     width=1
                     ),
@@ -52,11 +52,11 @@ layout = html.Div([
                     width=7
                     ),
                 ],
-                justify="center"
+                justify='center'
             ),
             dbc.Row([
                 dbc.Col([
-                        html.P(" Value ", id="value_label"),
+                        html.P(' Value ', id='value_label'),
                     ],
                     width=1
                     ),
@@ -66,7 +66,7 @@ layout = html.Div([
                     width=7
                     ),
                 ],
-                justify="center"
+                justify='center'
             ),
 
 ])
@@ -80,14 +80,14 @@ layout = html.Div([
     Input('hue_slider', 'id')
 )
 def initialize_or_restore_sliders(target_color, page_init):
-    active_img_id = session.get("active_image_id", None)
-    last_img_id = session.get("slider_last_image_id", None)
+    active_img_id = session.get('active_image_id', None)
+    last_img_id = session.get('slider_last_image_id', None)
 
     default_hue = [0.4, 0.5]
     default_sat = [0.5, 1.0]
     default_val = [0.1, 1.0]
 
-    if target_color and target_color != "None" and not any(val is None for val in target_color if isinstance(target_color, list)):
+    if target_color and target_color != 'None' and not any(val is None for val in target_color if isinstance(target_color, list)):
         try:
             hsv_target_color = ski.color.rgb2hsv(np.array(target_color, dtype=np.uint8))
             lower_hue_bound = float(np.clip(hsv_target_color[0] - 0.15, 0.0, 1.0))
@@ -97,15 +97,15 @@ def initialize_or_restore_sliders(target_color, page_init):
             pass
 
     if active_img_id == last_img_id and last_img_id is not None:
-        hue = session.get("slider_hue", default_hue)
-        sat = session.get("slider_sat", default_sat)
-        val = session.get("slider_val", default_val)
+        hue = session.get('slider_hue', default_hue)
+        sat = session.get('slider_sat', default_sat)
+        val = session.get('slider_val', default_val)
         return hue, sat, val
     else:
-        session["slider_last_image_id"] = active_img_id
-        session["slider_hue"] = default_hue
-        session["slider_sat"] = default_sat
-        session["slider_val"] = default_val
+        session['slider_last_image_id'] = active_img_id
+        session['slider_hue'] = default_hue
+        session['slider_sat'] = default_sat
+        session['slider_val'] = default_val
         session.modified = True
         return default_hue, default_sat, default_val
 
@@ -117,13 +117,13 @@ def initialize_or_restore_sliders(target_color, page_init):
               Input('value_slider', 'value'))
 def make_threshold_image(hue_range, saturation_range, value_range):
     try:
-        img_data = session["current_raw_image"]
+        img_data = session['current_raw_image']
     except:
         raise PreventUpdate()
 
-    session["slider_hue"] = hue_range
-    session["slider_sat"] = saturation_range
-    session["slider_val"] = value_range
+    session['slider_hue'] = hue_range
+    session['slider_sat'] = saturation_range
+    session['slider_val'] = value_range
     session.modified = True
 
     if(img_data.shape[2] == 4):
@@ -132,25 +132,25 @@ def make_threshold_image(hue_range, saturation_range, value_range):
         np_data = img_data
 
 
-    print("img data shape: {}".format(img_data.shape))
+    print('img data shape: {}'.format(img_data.shape))
     for ii in range(3):
         print(ii, np.min(img_data[..., ii]), np.max(img_data[..., ii]))
 
     hsv_lower = np.array([hue_range[0], saturation_range[0], value_range[0]], dtype = float)
     hsv_higher = np.array([hue_range[1], saturation_range[1], value_range[1]], dtype = float)
 
-    print("HSV LOWER: ", hsv_lower)
-    print("HSV HIGHER: ", hsv_higher)
-    print("np data shape: {}".format(np_data.shape))
+    print('HSV LOWER: ', hsv_lower)
+    print('HSV HIGHER: ', hsv_higher)
+    print('np data shape: {}'.format(np_data.shape))
     blurred_image = ski.filters.gaussian(np_data, sigma=1.0)
-    print("blurred image shape: {}".format(blurred_image.shape))
+    print('blurred image shape: {}'.format(blurred_image.shape))
     hsv_image = ski.color.rgb2hsv(blurred_image)
 
     try:
         binary_mask = cv2.inRange(hsv_image, hsv_lower, hsv_higher)
     except:
         binary_mask = np.zeros(np_data.shape[:2], dtype=bool)
-        print ("BINARY MASK: ", binary_mask)
+        print ('BINARY MASK: ', binary_mask)
     binary_mask = ski.filters.gaussian(binary_mask, sigma=3.0)
     edge = 20
     half_edge = int(edge/2)

@@ -50,7 +50,27 @@ button{
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
-    height: auto;
+    height: calc(100% - calc(40px + 5%));
+}
+
+#anchor{
+    position: relative;
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#task-selection-button{
+    position: absolute;
+    top: 10px;
+    right: 5%;
+    z-index: 9999;
+    background-color: #394047;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    cursor: pointer;
+    
 }
 
 #page-tabs{
@@ -64,6 +84,7 @@ button{
     padding: 20px;
     overflow-y: auto;
     width: 100%;
+    margin-top: 40px;
 }
 
 #navigation{
@@ -84,6 +105,12 @@ button{
 .navBtn{
     font-size: 24px;
     width: 25vh;
+}
+
+#camera-container{
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
 }
 
 
