@@ -112,8 +112,10 @@ def initialize_or_restore_sliders(target_color, page_init):
 @app.callback(Output(component_id='threshold_image', component_property= 'figure'),
               Input('hue_slider', 'value'),
               Input('saturation_slider', 'value'),
-              Input('value_slider', 'value'))
-def make_threshold_image(hue_range, saturation_range, value_range):
+              Input('value_slider', 'value'),
+              Input('dropdown-selection-store', 'data')
+              )
+def make_threshold_image(hue_range, saturation_range, value_range, task_selection):
     try:
         img_data = session['current_raw_image']
     except:
@@ -174,10 +176,17 @@ def make_threshold_image(hue_range, saturation_range, value_range):
         zmax=1.0,
     )
 
+    if task_selection == "btn-opt-a":
+        task_src ='/assets/aufgabe0.png'
+    elif task_selection == "btn-opt-b":
+        task_src ='/assets/aufgabe1.png'
+    else:
+        task_src ='/assets/aufgabe0.png'
+
     fig.update_layout(
         images=[
             dict(
-                source="/assets/aufgabe1.png",
+                source=task_src,
                 xref="paper",
                 yref="paper",
                 x=0.5,
