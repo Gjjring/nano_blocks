@@ -1,7 +1,16 @@
+<?
+keys['half_cd_height'] = keys['cd_height']*0.5
+keys['pos_x'] = keys['wg_displacement_left']*1e-6
+keys['pos_y'] = -1*keys['half_cd_height']*1e-6
+
+
+?>
 SourceBag {
   Source {
     ElectricFieldStrength {
       FieldBag {
+        Rotation = X:-Z:Y
+       Translation = [%(pos_x)e %(pos_y)e 0]
        FileName = "%(in_port_fields_path)s"
       }
     }

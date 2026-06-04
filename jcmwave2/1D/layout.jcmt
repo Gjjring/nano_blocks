@@ -1,5 +1,13 @@
-ExtractFace {
-  InputFileName="../2D/grid.jcm"
-  BoundaryId = %(boundary_id)d
-  CoordinateSystem=Global
+<?
+keys['buffer'] = (keys['cd_width']-keys['wg_width'])*0.5
+keys['half_cd_width'] = keys['cd_width']*0.5
+?>
+Layout1D {
+  UnitOfLength = 1e-6
+  BoundaryClassLeft = Transparent
+  BoundaryClassRight = Transparent
+  DomainIds = [1 2 1]
+  MaximumSideLengths = [%(air_slc)3f %(dielectric_slc)3f %(air_slc)3f]
+  Thicknesses = [%(buffer)e %(wg_width)e %(buffer)e]
+  LeftPosition = -%(half_cd_width)e
 }
