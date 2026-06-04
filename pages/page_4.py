@@ -25,50 +25,48 @@ server = app.server
 
 layout = html.Div([
     dcc.Graph(id = 'threshold_image'),
-
-            dbc.Row([
-                dbc.Col([
-                        html.P('Hue', id='hue_label'),
-                    ],
-                    width=1
-                    ),
-                dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.4, 0.5], marks=None, allowCross=False, id='hue_slider')
-                        ],
-                    width=7
-                    ),
-                ],
-                justify='center'
+    dbc.Row([
+        dbc.Col([
+                html.P('Hue', id='hue_label'),
+            ],
+            width=1
             ),
-            dbc.Row([
-                dbc.Col([
-                        html.P('Saturation', id='saturation_label'),
-                    ],
-                    width=1
-                    ),
-                dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.5, 1.0], marks=None, allowCross=False, id='saturation_slider')
-                        ],
-                    width=7
-                    ),
+        dbc.Col([
+                dcc.RangeSlider(0, 1.0, 0.01, value=[0.4, 0.5], marks=None, allowCross=False, id='hue_slider')
                 ],
-                justify='center'
+            width=7
             ),
-            dbc.Row([
-                dbc.Col([
-                        html.P(' Value ', id='value_label'),
-                    ],
-                    width=1
-                    ),
-                dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.1, 1.0], marks=None, allowCross=False, id='value_slider')
-                        ],
-                    width=7
-                    ),
+        ],
+        justify='center'
+    ),
+    dbc.Row([
+        dbc.Col([
+                html.P('Saturation', id='saturation_label'),
+            ],
+            width=1
+            ),
+        dbc.Col([
+                dcc.RangeSlider(0, 1.0, 0.01, value=[0.5, 1.0], marks=None, allowCross=False, id='saturation_slider')
                 ],
-                justify='center'
+            width=7
             ),
-
+        ],
+        justify='center'
+    ),
+    dbc.Row([
+        dbc.Col([
+                html.P(' Value ', id='value_label'),
+            ],
+            width=1
+            ),
+        dbc.Col([
+                dcc.RangeSlider(0, 1.0, 0.01, value=[0.1, 1.0], marks=None, allowCross=False, id='value_slider')
+                ],
+            width=7
+            ),
+        ],
+        justify='center'
+    ),
 ])
 
 
@@ -174,6 +172,26 @@ def make_threshold_image(hue_range, saturation_range, value_range):
         ],
         zmin=0.,
         zmax=1.0,
+    )
+
+    fig.update_layout(
+        images=[
+            dict(
+                source="/assets/aufgabe1.png",
+                xref="paper",
+                yref="paper",
+                x=0.5,
+                y=0.5,
+                sizex=1.5,
+                sizey=1.5,
+                xanchor="center",
+                yanchor="middle",
+                #layer="above"
+            )
+        ]
+    )
+    fig.update_layout(
+       margin=dict(t=100, b=100, l=50, r=50)
     )
 
 
