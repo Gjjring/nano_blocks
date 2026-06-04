@@ -112,7 +112,7 @@ def run_jcmwave_simulation(threshold_data, project):
     contours = ski.measure.find_contours(threshold_data.T, 0.5)
     for contour in contours:
         p = shapely.Polygon(contour)
-        if p.area > 1000:
+        if p.area > 10:
             p2 = p.simplify(1)
             keys['polygons'].append(p2)
 
