@@ -352,9 +352,9 @@ def update_overlay(selected_value):
     elif selected_value == "btn-opt-b":
         return '/assets/aufgabe1.png', style_visible
     elif selected_value == "btn-opt-c":
-        return '/assets/filter_c.png', style_visible
+        return '/assets/aufgabe2.png', style_visible
     elif selected_value == "btn-opt-d":
-        return '/assets/filter_d.png', style_visible
+        return '/assets/aufgabe3.png', style_visible
     else:
         return '', style_hidden
     

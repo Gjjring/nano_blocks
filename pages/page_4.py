@@ -231,6 +231,10 @@ def make_threshold_image(hue_range, saturation_range, value_range, task_selectio
         task_src ='/assets/aufgabe0.png'
     elif task_selection == "btn-opt-b":
         task_src ='/assets/aufgabe1.png'
+    elif task_selection == "btn-opt-c":
+        task_src ='/assets/aufgabe2.png'
+    elif task_selection == "btn-opt-d":
+        task_src ='/assets/aufgabe3.png'
     else:
         task_src ='/assets/aufgabe0.png'
 
