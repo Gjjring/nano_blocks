@@ -3,13 +3,13 @@
 
 <svg
    width="6000"
-   height="5000"
-   viewBox="0 0 1587.5 1322.9167"
+   height="4500"
+   viewBox="0 0 1587.5 1190.625"
    version="1.1"
    id="svg5"
-   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
    sodipodi:docname="aufgaben.svg"
-   inkscape:export-filename="aufgaben.png"
+   inkscape:export-filename="aufgabe3.png"
    inkscape:export-xdpi="20"
    inkscape:export-ydpi="20"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -27,15 +27,15 @@
      inkscape:deskcolor="#d9d9d9"
      inkscape:document-units="px"
      showgrid="true"
-     inkscape:zoom="0.14866305"
-     inkscape:cx="2401.4037"
-     inkscape:cy="2653.652"
+     inkscape:zoom="0.10512065"
+     inkscape:cx="275.87348"
+     inkscape:cy="1992.9481"
      inkscape:window-width="2560"
-     inkscape:window-height="1371"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-height="1377"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1">
+     inkscape:current-layer="layer5">
     <inkscape:grid
        type="xygrid"
        id="grid177"
@@ -43,10 +43,88 @@
        spacingy="26.458334"
        originx="0"
        originy="0"
-       empspacing="10" />
+       empspacing="10"
+       units="px" />
   </sodipodi:namedview>
   <defs
-     id="defs2" />
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="Triangle"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="0.7"
+       markerHeight="0.7"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Triangle-8"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="0.69999999"
+       markerHeight="0.69999999"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135-82" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Triangle-7"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="0.69999999"
+       markerHeight="0.69999999"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135-1" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Triangle-1"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="0.69999999"
+       markerHeight="0.69999999"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135-4" />
+    </marker>
+  </defs>
   <g
      inkscape:groupmode="layer"
      id="layer2"
@@ -55,8 +133,8 @@
     <rect
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.64583;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
        id="rect395"
-       width="1058.3331"
-       height="793.75006"
+       width="1058.3334"
+       height="661.45837"
        x="264.58334"
        y="264.58334" />
   </g>
@@ -64,33 +142,75 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
+    <g
+       id="g1">
+      <rect
+         style="fill:#88ccee;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.24048;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+         id="rect951-5"
+         width="79.375"
+         height="198.4375"
+         x="489.47919"
+         y="992.1875" />
+      <path
+         style="fill:none;stroke:#000000;stroke-width:10.5833;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle)"
+         d="m 529.16666,1164.1667 2e-5,-132.2917"
+         id="path1"
+         sodipodi:nodetypes="cc" />
+    </g>
     <rect
-       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.74178;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
-       id="rect951"
+       style="display:inline;fill:#88ccee;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.24048;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+       id="rect951-5-7"
        width="79.375"
-       height="264.58334"
+       height="198.4375"
        x="489.47919"
-       y="-2.220446e-16" />
+       y="0" />
     <rect
-       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.74178;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
-       id="rect951-3"
+       style="display:inline;fill:#88ccee;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.24048;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+       id="rect951-5-2"
        width="79.375"
-       height="264.58334"
+       height="198.4375"
        x="1018.6459"
-       y="-2.220446e-16" />
+       y="0" />
     <rect
-       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.74178;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
-       id="rect951-5"
+       style="fill:#88ccee;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.24048;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+       id="rect951-5-5"
        width="79.375"
-       height="264.58334"
-       x="489.47919"
-       y="1058.3334" />
-    <rect
-       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.74178;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
-       id="rect951-3-3"
-       width="79.375"
-       height="264.58334"
+       height="198.4375"
        x="1018.6459"
-       y="1058.3334" />
+       y="-1190.625"
+       transform="scale(1,-1)" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="port2"
+     style="display:none">
+    <path
+       style="display:inline;fill:none;stroke:#000000;stroke-width:10.5833;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle-7)"
+       d="m 529.16665,171.9792 2e-5,-132.2917"
+       id="path1-6"
+       sodipodi:nodetypes="cc" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="port3"
+     style="display:none">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:10.5833;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle-1)"
+       d="M 1058.3333,171.9792 V 39.6875"
+       id="path1-2"
+       sodipodi:nodetypes="cc" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="port4"
+     style="display:inline">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:10.5833;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Triangle-8)"
+       d="m 1058.3333,1018.6458 10e-5,132.2917"
+       id="path1-1"
+       sodipodi:nodetypes="cc" />
   </g>
 </svg>
