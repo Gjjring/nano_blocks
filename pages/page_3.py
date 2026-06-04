@@ -24,13 +24,7 @@ server = app.server
 
 layout = html.Div([
             html.Hr(),
-            dbc.Row([
-                dbc.Col([
-                    dcc.Graph(id = 'raw-camera'),
-                ],
-                width=12)
-            ],justify='center'
-            ),
+            dcc.Graph(id = 'raw-camera', config={'displayModeBar': False}),
             html.Hr(),
             
             dbc.Row([

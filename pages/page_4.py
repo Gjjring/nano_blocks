@@ -24,49 +24,100 @@ app = dash.get_app()
 server = app.server
 
 layout = html.Div([
-    dcc.Graph(id = 'threshold-image'),
-    dbc.Row([
-        dbc.Col([
-                html.P('Hue', id='hue_label'),
-            ],
-            width=1
-            ),
-        dbc.Col([
-                dcc.RangeSlider(0, 1.0, 0.01, value=[0.4, 0.5], marks=None, allowCross=False, id='hue_slider')
+    dcc.Tabs(id = 'adjusting-tabs', value = 'adjust1', children=[
+        dcc.Tab(label = 'Adjust 1', value = 'adjust1', children=[
+            dcc.Graph(id = 'threshold-image1', config={'displayModeBar': False}),
+
+            dbc.Row([
+                dbc.Col([
+                        html.P('Hue', id='hue_label'),
+                    ],
+                    width=1
+                    ),
+                dbc.Col([
+                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.4, 0.5], marks=None, allowCross=False, id='hue_slider')
+                        ],
+                    width=7
+                    ),
                 ],
-            width=7
+                justify='center'
             ),
-        ],
-        justify='center'
-    ),
-    dbc.Row([
-        dbc.Col([
-                html.P('Saturation', id='saturation_label'),
-            ],
-            width=1
-            ),
-        dbc.Col([
-                dcc.RangeSlider(0, 1.0, 0.01, value=[0.5, 1.0], marks=None, allowCross=False, id='saturation_slider')
+            dbc.Row([
+                dbc.Col([
+                        html.P('Saturation', id='saturation_label'),
+                    ],
+                    width=1
+                    ),
+                dbc.Col([
+                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.5, 1.0], marks=None, allowCross=False, id='saturation_slider')
+                        ],
+                    width=7
+                    ),
                 ],
-            width=7
+                justify='center'
             ),
-        ],
-        justify='center'
-    ),
-    dbc.Row([
-        dbc.Col([
-                html.P(' Value ', id='value_label'),
-            ],
-            width=1
-            ),
-        dbc.Col([
-                dcc.RangeSlider(0, 1.0, 0.01, value=[0.1, 1.0], marks=None, allowCross=False, id='value_slider')
+            dbc.Row([
+                dbc.Col([
+                        html.P(' Value ', id='value_label'),
+                    ],
+                    width=1
+                    ),
+                dbc.Col([
+                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.1, 1.0], marks=None, allowCross=False, id='value_slider')
+                        ],
+                    width=7
+                    ),
                 ],
-            width=7
+                justify='center'
             ),
-        ],
-        justify='center'
-    ),
+
+        ]),
+        dcc.Tab(label = 'Adjust 2', value = 'adjust2', children=[
+            dcc.Graph(id = 'threshold-image2', config={'displayModeBar': False}),
+            dbc.Row([
+                dbc.Col([
+                        html.P('Min-Size', id='min-size_label'),
+                    ],
+                    width=1
+                    ),
+                dbc.Col([
+                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.4, 0.5], marks=None, allowCross=False, id='min-size_slider')
+                        ],
+                    width=7
+                    ),
+                ],
+                justify='center'
+            ),
+            dbc.Row([
+                dbc.Col([
+                        html.P('Simplify', id='simplify_label'),
+                    ],
+                    width=1
+                    ),
+                dbc.Col([
+                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.4, 0.5], marks=None, allowCross=False, id='simplify_slider')
+                        ],
+                    width=7
+                    ),
+                ],
+                justify='center'
+            ),
+            dbc.Row([
+                dbc.Col([
+                        html.P('Blur', id='blur_label'),
+                    ],
+                    width=1
+                    ),
+                dbc.Col([
+                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.5, 1.0], marks=None, allowCross=False, id='blur_slider')
+                        ],
+                    width=7
+                    ),
+                ],
+                justify='center'
+            ),
+        ]),
+    ])
 ])
 
 
@@ -109,7 +160,7 @@ def initialize_or_restore_sliders(target_color, page_init):
 
 
 
-@app.callback(Output(component_id='threshold-image', component_property= 'figure'),
+@app.callback(Output(component_id='threshold-image1', component_property= 'figure'),
               Input('hue_slider', 'value'),
               Input('saturation_slider', 'value'),
               Input('value_slider', 'value'),

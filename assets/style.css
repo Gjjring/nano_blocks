@@ -169,13 +169,13 @@ button{
 
 #video {
     position: absolute;
-    width: 480px;
-    height: 360px;
+    width: 424px;
+    height: 318px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1;
-    border: none; 
+    border: none;
 }
 
 #camera-overlay-image {

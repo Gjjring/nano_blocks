@@ -39,8 +39,8 @@ layout = html.Div([
         dcc.Loading(
             type='circle',
             children=[
-                dcc.Graph(id = 'jcm_mesh_output', className='output', style={"height": "480px", "width": "640px", "display": "block"}),
-                dcc.Graph(id = 'jcm_intensity_output', className='output', style={"height": "480px", "width": "640px", "display": "none"}),
+                dcc.Graph(id = 'jcm_mesh_output', className='output', style={"height": "480px", "width": "640px", "display": "block"}, config={'displayModeBar': False}),
+                dcc.Graph(id = 'jcm_intensity_output', className='output', style={"height": "480px", "width": "640px", "display": "none"}, config={'displayModeBar': False}),
             ]
         ),
     ])
@@ -112,7 +112,7 @@ def run_jcmwave_simulation(threshold_data, project):
     contours = ski.measure.find_contours(threshold_data.T, 0.5)
     for contour in contours:
         p = shapely.Polygon(contour)
-        if p.area > 1000:
+        if p.area > 10:
             p2 = p.simplify(1)
             keys['polygons'].append(p2)
 
