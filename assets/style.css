@@ -23,6 +23,8 @@ body {
 
 h3{
     font-size: 36px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 p{
     font-size: 18px;
@@ -145,10 +147,17 @@ button{
     width: 25vh;
 }
 
+#camera-styling-container{
+    height: fit-content;
+    width: fit-content;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
 #camera-container {
     display: flex;
-    flex-direction: row;
-    justify-content: center; 
+    flex-direction: row; 
     align-items: center;     
     margin-top: 20px;
 }
@@ -159,20 +168,47 @@ button{
 }
 
 #video {
-    border: 1px solid black;
-    display: block;
+    position: absolute;
+    width: 480px;
+    height: 360px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    border: none; 
 }
 
-#camera-flash {
+#camera-overlay-image {
     position: absolute;
     top: 0;
     left: 0;
     width: 640px;
     height: 480px;
+    z-index: 2;
+    pointer-events: none;
+    display: none;
+}
+
+#task-container{
+    position: relative;
+    display: inline-block;
+    width: 640px;
+    height: 480px;
+}
+
+
+#camera-flash {
+    position: absolute;
+    width: 480px;
+    height: 360px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     background-color: white;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.1s ease-out;
+    z-index: 3;
 }
 
 #capture-btn {
@@ -227,6 +263,13 @@ button{
     transform: translate(-50%, 0)
 }
 
-#jcm_mesh_output{
- height: 100%;   
+.output{
+    position: absolute;
+    left: 50%;
+    transform:translate(-50%, 0);
+    border: #333 solid;
+}
+
+#result-box{
+    justify-content: center;
 }

@@ -35,13 +35,15 @@ layout = html.Div([
         id='plot-type-dropdown',
         style={'width': '300px', 'margin': '0 auto'}
     ),
-    dcc.Loading(
-        type='circle',
-        children=[
-            dcc.Graph(id = 'jcm_mesh_output', style={"height": "900px", "display": "block"}),
-            dcc.Graph(id = 'jcm_intensity_output', style={"height": "900px", "display": "none"}),
-        ]
-    ),
+    html.Div(id='result-box', children=[
+        dcc.Loading(
+            type='circle',
+            children=[
+                dcc.Graph(id = 'jcm_mesh_output', className='output', style={"height": "480px", "width": "640px", "display": "block"}),
+                dcc.Graph(id = 'jcm_intensity_output', className='output', style={"height": "480px", "width": "640px", "display": "none"}),
+            ]
+        ),
+    ])
 ])
 
 def order_lexicographically(points, start=0.0, return_sort_indices=False):
@@ -185,7 +187,7 @@ def make_field_data_plot(field_data):
     fig.update_yaxes(showticklabels=False)
 
     fig.update_layout(
-        height=900,
+        height=480,
         plot_bgcolor="white",
         paper_bgcolor="white",
     )
@@ -305,7 +307,7 @@ def make_grid_plot(grid_tables):
     fig.update_yaxes(showticklabels=False)
 
     fig.update_layout(
-        height=900,
+        height=480,
         plot_bgcolor="white",
         paper_bgcolor="white",
     )
@@ -322,9 +324,9 @@ def make_grid_plot(grid_tables):
                 ])
 def swap_displayed_data(plot_type):
     if plot_type == "Simulation Mesh":
-        return {"height": "900px", "display": "block"}, {"height": "900px", "display": "none"}
+        return {"height": "480px", "width": "640px", "display": "block"}, {"height": "480px", "width": "640px", "display": "none"}
     elif plot_type == "Intensity":
-        return {"height": "900px", "display": "none"}, {"height": "900px", "display": "block"}
+        return {"height": "480px", "width": "640px", "display": "none"}, {"height": "480px", "width": "640px", "display": "block"}
     else:
         raise PreventUpdate()
 

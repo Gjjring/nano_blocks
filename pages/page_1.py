@@ -27,33 +27,23 @@ layout = html.Div([
     dcc.Tabs(id='image-tabs', value='camera', children=[
         dcc.Tab(label='Camera', value='camera', children=[
             html.H3('Camera Stream'),
-            html.Div(id = 'camera-container', children = [
+            html.Div(id='camera-styling-container', children=[
+                html.Div(id = 'camera-container', children = [
+                html.Div(id='task-container', children=[
+                html.Video(id='video', width='480', height='360', autoPlay=True),
+                html.Div(id='camera-flash'),
+                html.Img(id='camera-overlay-image'),
+            ]),
+            html.Div(id='camera-controls', children=[
+                html.Button('Capture', id='capture-btn', n_clicks=0),
                 html.Div([
-                html.Video(id='video', width='640', height='480', autoPlay=True,
-                       style={'border': '1px solid black',
-                              'position':'absolute', 'top': '120px', 'left': '160px', 'zIndex': '2'}),
-
-                html.Div(id='camera-flash', style={
-                'position': 'absolute',
-                'top': '120px', 'left': '160px', 'width': '640px', 'height': '480px',
-                'backgroundColor': 'white',
-                'opacity': '0',
-                'pointerEvents': 'none',
-                'transition': 'opacity 0.1s ease-out',
-                'zIndex': '3'
-                }),
-                html.Img(id='camera-overlay-image', style={
-                    'position': 'absolute', 'top': '0', 'left': '0',
-                    'width': '960px', 'height': '720px', 'zIndex': '1',
-                    'pointerEvents': 'none', 'display': 'none'
-                }),
-            ], style={'position': 'relative', 'display': 'inline-block',
-                      'width': '960px', 'height': '720px'}),
-            html.Button('Capture', id='capture-btn', n_clicks=0),
-            html.Div([
-                html.Img(id='capture-preview')
-            ], style={'display': 'inline-block'}),
-            ])
+                    html.Img(id='capture-preview')
+                ], style={'display': 'inline-block'}),
+            ]),
+            ]),
+            
+            
+            ]),
         ]),
 
         dcc.Tab(label='Draw Shapes', value='draw', children=[
@@ -344,6 +334,7 @@ def save_drawn_canvas_to_session(n_clicks, current_figure):
     return image_data_uri
 
 #laden der Task-Images
+
 @app.callback(
     Output('camera-overlay-image', 'src'),
     Output('camera-overlay-image', 'style'),
@@ -351,30 +342,19 @@ def save_drawn_canvas_to_session(n_clicks, current_figure):
     prevent_initial_call=False
 )
 def update_overlay(selected_value):
-    base_style = {
-        'position': 'absolute', 'top': '0', 'left': '0',
-        'width': '960px', 'height': '720px', 'zIndex': '10',
-        'pointerEvents': 'none', 'display': 'block',
-    }
+    style_visible = {'display': 'block'}
+    style_hidden = {'display': 'none'}
+    
     print("update_overlay called with selected_value:", selected_value)
 
     if selected_value == "btn-opt-a":
-        base_style['display'] = 'block'
-        return '/assets/aufgabe0.png', base_style
-
+        return '/assets/aufgabe0.png', style_visible
     elif selected_value == "btn-opt-b":
-        base_style['display'] = 'block'
-        print("returning src /assets/aufgabe1.png")
-        print("returning style:", base_style)
-        return '/assets/aufgabe1.png', base_style
-
+        return '/assets/aufgabe1.png', style_visible
     elif selected_value == "btn-opt-c":
-        base_style['display'] = 'block'
-        return '/assets/filter_c.png', base_style
-
+        return '/assets/filter_c.png', style_visible
     elif selected_value == "btn-opt-d":
-        base_style['display'] = 'block'
-        return '/assets/filter_d.png', base_style
-
+        return '/assets/filter_d.png', style_visible
     else:
-        return '', base_style
+        return '', style_hidden
+    
