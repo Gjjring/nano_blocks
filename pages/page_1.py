@@ -68,7 +68,7 @@ layout = html.Div([
                             id='drawing-area',
                             config={
                                 'modeBarButtonsToAdd': ['eraseshape'],
-                                'displayModeBar': True,
+                                'displayModeBar': False,
                                 'toImageButtonOptions': {
                                     'format': 'png',
                                     'filename': 'meine_zeichnung',

@@ -24,7 +24,7 @@ server = app.server
 
 layout = html.Div([
             html.Hr(),
-            dcc.Graph(id = 'raw-camera'),
+            dcc.Graph(id = 'raw-camera', config={'displayModeBar': False}),
             html.Hr(),
             
             dbc.Row([

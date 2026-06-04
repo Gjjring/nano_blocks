@@ -24,7 +24,7 @@ app = dash.get_app()
 server = app.server
 
 layout = html.Div([
-    dcc.Graph(id = 'threshold_image'),
+    dcc.Graph(id = 'threshold_image', config={'displayModeBar': False}),
 
             dbc.Row([
                 dbc.Col([

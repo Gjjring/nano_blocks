@@ -39,8 +39,8 @@ layout = html.Div([
         dcc.Loading(
             type='circle',
             children=[
-                dcc.Graph(id = 'jcm_mesh_output', className='output', style={"height": "480px", "width": "640px", "display": "block"}),
-                dcc.Graph(id = 'jcm_intensity_output', className='output', style={"height": "480px", "width": "640px", "display": "none"}),
+                dcc.Graph(id = 'jcm_mesh_output', className='output', style={"height": "480px", "width": "640px", "display": "block"}, config={'displayModeBar': False}),
+                dcc.Graph(id = 'jcm_intensity_output', className='output', style={"height": "480px", "width": "640px", "display": "none"}, config={'displayModeBar': False}),
             ]
         ),
     ])
