@@ -24,7 +24,7 @@ app = dash.get_app()
 server = app.server
 
 layout = html.Div([
-    dcc.Graph(id = 'threshold_image'),
+    dcc.Graph(id = 'threshold-image'),
     dbc.Row([
         dbc.Col([
                 html.P('Hue', id='hue_label'),
@@ -109,7 +109,7 @@ def initialize_or_restore_sliders(target_color, page_init):
 
 
 
-@app.callback(Output(component_id='threshold_image', component_property= 'figure'),
+@app.callback(Output(component_id='threshold-image', component_property= 'figure'),
               Input('hue_slider', 'value'),
               Input('saturation_slider', 'value'),
               Input('value_slider', 'value'),
