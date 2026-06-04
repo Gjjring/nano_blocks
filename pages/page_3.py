@@ -75,9 +75,10 @@ layout = html.Div([
 
 @app.callback(
     Output('raw-camera', 'figure'),
-    Input('camera-start-dummy', 'id') # Fires instantly on page load because this element renders
+    [Input('camera-start-dummy', 'id'), # Fires instantly on page load because this element renders
+     Input('dropdown-selection-store', 'data')]
 )
-def load_selected_image_into_graph(_):
+def load_selected_image_into_graph(_, task_selection):
     current_raw_image = session.get('current_raw_image', None)
     
     if current_raw_image is None:
@@ -86,6 +87,34 @@ def load_selected_image_into_graph(_):
         
     # Plot the raw data safely now that the element exists on screen
     fig = px.imshow(current_raw_image)
+
+    if task_selection == "btn-opt-a":
+        task_src ='/assets/aufgabe0.png'
+    elif task_selection == "btn-opt-b":
+        task_src ='/assets/aufgabe1.png'
+    else:
+        task_src ='/assets/aufgabe0.png'
+
+    fig.update_layout(
+        images=[
+            dict(
+                source=task_src,
+                xref="paper",
+                yref="paper",
+                x=0.5,
+                y=0.5,
+                sizex=1.5,
+                sizey=1.5,
+                xanchor="center",
+                yanchor="middle",
+                #layer="above"
+            )
+        ]
+    )
+    fig.update_layout(
+       margin=dict(t=100, b=100, l=50, r=50)
+    )
+
     fig.update_layout(coloraxis_showscale=False)
     fig.update_xaxes(showticklabels=False)
     fig.update_yaxes(showticklabels=False)

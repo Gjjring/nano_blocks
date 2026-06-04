@@ -273,3 +273,21 @@ button{
 #result-box{
     justify-content: center;
 }
+
+#raw-camera{
+    display: block;
+    height: 600px;
+    width: 800px;
+    margin: 0 auto;
+    display: flex;
+    justifyContent: center;
+}
+
+#threshold-image{
+    display: block;
+    height: 600px;
+    width: 800px;
+    margin: 0 auto;
+    display: flex;
+    justifyContent: center;
+}
