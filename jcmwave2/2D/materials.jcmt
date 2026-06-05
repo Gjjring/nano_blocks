@@ -7,7 +7,7 @@ Material {
 }
 Material { 
   Name = "DielectricWG"
-  DomainId = [2 3]
+  DomainId = [2 3, 22]
   RelPermittivity = 12.25
   RelPermeability = 1.0
 }

@@ -40,35 +40,22 @@ PostProcess {
   }
 }
 
-#PostProcess {
-#  ModeOverlap {
-#    FieldBagPath = "project_results/fieldbag.jcm"
-#    ModeFileName = "%(path_out_port_fields)s"
-#    OutputFileName =  "overlap_transm.jcm"
+<?
+keys['half_cd_height'] = keys['cd_height']*0.5
+keys['pos_x'] = keys['wg_displacement_left']*1e-6
+keys['pos_y'] = keys['half_cd_height']*1e-6
+
+
+?>
+PostProcess {
+  ModeOverlap {
+    FieldBagPath = "project_results/fieldbag.jcm"
+    Port = DetectPorts
+#    Port {
+#      Rotation = X:-Z:Y
+#      Position = [%(pos_x)e %(pos_y)e 0]
 #    }
-#}
-#PostProcess {
-#  ModeOverlap {
-#    FieldBagPath = "project_results/fieldbag.jcm"
-#    ModeFileName = "%(path_in_port_fields)s"
-#    OutputFileName =  "overlap_ref.jcm"
-#    }
-#}
-#
-#<?
-#if(keys['plot_pv_eps']):
-#    ?>
-#    PostProcess {
-#      ExportFields {
-#        FieldBagPath = "project_results/fieldbag.jcm"
-#        OutputQuantity = ElectromagneticFieldEnergyFluxDensity
-#        OutputFileName = "poynting_flux.jcm"
-#        Cartesian {
-#          NGridPointsX = 301
-#          NGridPointsY = 1201
-#        }
-#      }
-#    }
-#<?
-#?>
-#
+    ModeFileName =  "%(in_port_fields_path)s"
+    OutputFileName =  "overlap_transm.jcm"
+    }
+}

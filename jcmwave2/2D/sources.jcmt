@@ -7,11 +7,12 @@ keys['pos_y'] = -1*keys['half_cd_height']*1e-6
 ?>
 SourceBag {
   Source {
+    DomainId = 22
     ElectricFieldStrength {
       FieldBag {
         Rotation = X:-Z:Y
-       Translation = [%(pos_x)e %(pos_y)e 0]
-       FileName = "%(in_port_fields_path)s"
+        Translation = [%(pos_x)e %(pos_y)e 0]
+        FileName = "%(in_port_fields_path)s"
       }
     }
   }

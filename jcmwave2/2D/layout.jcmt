@@ -6,6 +6,12 @@ Layout2D {
   Name = "Waveguide_Filter"
   UnitOfLength = 1e-06
 
+  BoundaryConditions {
+    Boundary {
+      Class = Transparent
+      Direction = All
+    }
+  }
 
   Objects {
     Parallelogram {
@@ -14,30 +20,30 @@ Layout2D {
       Height = %(cd_height)e
       DomainId = 1
       Priority = -1
-       Boundary {
-        Class = Transparent
-        Number = 1
-        BoundaryId = 1
-      }
-      Boundary {
-        Class = Transparent
-        Number = 2
-        BoundaryId = 2
-      }
-      Boundary {
-        Class = Transparent
-        Number = 3
-        BoundaryId = 3
-      }
-      Boundary {
-        Class = Transparent
-        Number = 4
-        BoundaryId = 4
-      }
       MeshOptions {
         MaximumSideLength = %(air_slc)3f
       }
     }
+    Parallelogram {
+      Name = "wg_in_left_source"
+      Width = %(wg_width)e
+      Height = %(dielectric_slc)3f
+      DomainId = 22
+      Priority = 3
+      Port = South
+      Alignment {
+        Displacement = [%(wg_displacement_left)e, -0.05]
+        Parent {
+          Domain = "ComputationalDomain"
+          Port = South
+        }
+        Orientation = Parallel
+      }
+      MeshOptions {
+        MaximumSideLength = %(dielectric_slc)3f
+      }
+    }
+
 
     Parallelogram {
       Name = "wg_in_left"
