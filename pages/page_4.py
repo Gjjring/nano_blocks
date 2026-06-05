@@ -120,13 +120,13 @@ layout = html.Div([
 ])
 
 @callback(
-    Output('adjusting-tabs', 'value'),  # Ersetze dies mit der echten ID deiner Tabs auf Seite 4
+    Output('adjusting-tabs', 'value'), 
     Input('inner-tab-store2', 'data'),
-    prevent_initial_call=False # Muss auch beim Laden der Seite prüfen
+    prevent_initial_call=False
 )
 def update_sub_tabs_visually(stored_tab):
     if not stored_tab:
-        return 'adjust1' # Fallback-Standardwert
+        return 'adjust1'
     return stored_tab
 
 
@@ -263,7 +263,6 @@ def make_threshold_image(hue_range, saturation_range, value_range, task_selectio
                 sizey=1.5,
                 xanchor="center",
                 yanchor="middle",
-                #layer="above"
             )
         ]
     )
@@ -315,13 +314,13 @@ def initialize_or_restore_sliders2(page_init, current_page):
 @callback(
     Output(component_id='threshold-image2', component_property='figure'),
     Output('slider-geo-store', 'data'),
-    Input('threshold-image2', 'id'),            # Argument 1: canvas_id
-    Input('dropdown-selection-store', 'data'),  # Argument 2: task_selection
-    Input('min-size_slider', 'value'),          # Argument 3: min_size_val
-    Input('simplify_slider', 'value'),         # Argument 4: simplify_val
-    Input('blur_slider', 'value'),             # Argument 5: blur_val
-    State('inner-tab-store2', 'data'),          # Argument 6: current_subpage
-    State('current-page-store', 'data'),        # Argument 7: current_page
+    Input('threshold-image2', 'id'),
+    Input('dropdown-selection-store', 'data'),
+    Input('min-size_slider', 'value'),
+    Input('simplify_slider', 'value'),
+    Input('blur_slider', 'value'),
+    State('inner-tab-store2', 'data'),
+    State('current-page-store', 'data'),
     prevent_initial_call=True,
 )
 def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val, blur_val, current_subpage, current_page):
@@ -332,36 +331,28 @@ def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val,
     if simplify_val is None: simplify_val = 0.1
     if blur_val is None: blur_val = 0.5 
 
-    # 1. Maske laden
     binary_mask = session.get('current_threshold_image')
     if binary_mask is None:
         print("\n[KONSOLE] DEBUG: binary_mask in Session ist absolut leer (None)!")
         raise PreventUpdate
 
-    # In NumPy-Array umwandeln
     binary_mask = np.array(binary_mask, dtype=np.float64)
 
-    # 2. Filter anwenden
     if blur_val > 0:
         smoothed = ski.filters.gaussian(binary_mask, sigma=blur_val * 5.0)
         binary_mask = (smoothed > 0.3).astype(np.uint8)
     else:
         binary_mask = (binary_mask > 0.5).astype(np.uint8)
 
-    # ==========================================================
-    # VISUELLER KONSOLEN-PRINT DER BINARY MASK
-    # ==========================================================
     print("\n=== VISUELLER MASKEN-CHECK IN DER KONSOLE ===")
     print(f"Dimensionen des Bildes: {binary_mask.shape}")
     print(f"Gesamtsumme aktiver Pixel im Array: {np.sum(binary_mask)}")
     
-    # Wir überspringen Pixel (Slicing mit ::4), damit das Bild ins Terminal passt
     verkleinerte_maske = binary_mask[::4, ::4]
     
     for zeile in verkleinerte_maske:
         print_zeile = ""
         for pixel in zeile:
-            # Wenn der Pixel aktiv (> 0) ist, drucken wir ein '#', sonst ein Leerzeichen
             if pixel > 0:
                 print_zeile += "#"
             else:
@@ -369,7 +360,6 @@ def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val,
         print(print_zeile)
     print("=============================================\n")
 
-    # 3. Konturen extrahieren für die Plotly-Figur
     image_height = binary_mask.shape[0]
     image_width = binary_mask.shape[1]
     keys = {'polygons': []}
@@ -377,7 +367,7 @@ def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val,
     contours = ski.measure.find_contours(binary_mask.T, 0.5)
     for contour in contours:
         p = shapely.Polygon(contour)
-        min_area_threshold = min_size_val * 0.1  # Testweise sehr niedrig angesetzt
+        min_area_threshold = min_size_val * 0.1
         if p.area > min_area_threshold:
             p2 = p.simplify(simplify_val * 5.0)
             keys['polygons'].append(p2)

@@ -333,7 +333,6 @@ def save_drawn_canvas_to_session(n_clicks, current_figure):
 
     return image_data_uri
 
-#laden der Task-Images
 
 @app.callback(
     Output('camera-overlay-image', 'src'),

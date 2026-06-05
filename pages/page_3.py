@@ -33,7 +33,7 @@ layout = html.Div([
                 html.Button(
                     '', id='temporary_color_output',
                     disabled=True,
-                    style={'width':'50px', 'height':'50px', 'background-color':'white', 'marginRight': '10px'} # kleiner Abstand nach rechts
+                    style={'width':'50px', 'height':'50px', 'background-color':'white', 'marginRight': '10px'}
                 ),
                 
                 html.Button(
@@ -41,9 +41,9 @@ layout = html.Div([
                     disabled=True,
                     style={'width':'50px', 'height':'50px', 'background-color':'white'}
                 ),
-            ], width=3, style={'display': 'flex', 'flexDirection': 'row'}), # Setzt die Buttons sauber nebeneinander
+            ], width=3, style={'display': 'flex', 'flexDirection': 'row'}),
             
-            # Rechte Spalte (Breite 9 von 12) für die RGB-Inputs
+
             dbc.Col([
                 dbc.Row([
                     dbc.Col([
@@ -74,17 +74,15 @@ layout = html.Div([
 
 @app.callback(
     Output('raw-camera', 'figure'),
-    [Input('camera-start-dummy', 'id'), # Fires instantly on page load because this element renders
+    [Input('camera-start-dummy', 'id'), 
      Input('dropdown-selection-store', 'data')]
 )
 def load_selected_image_into_graph(_, task_selection):
     current_raw_image = session.get('current_raw_image', None)
     
     if current_raw_image is None:
-        # If no image has been processed yet, return an empty figure placeholder
         return go.Figure()
         
-    # Plot the raw data safely now that the element exists on screen
     fig = px.imshow(current_raw_image)
 
     if task_selection == "btn-opt-a":
@@ -110,7 +108,6 @@ def load_selected_image_into_graph(_, task_selection):
                 sizey=1.5,
                 xanchor="center",
                 yanchor="middle",
-                #layer="above"
             )
         ]
     )
