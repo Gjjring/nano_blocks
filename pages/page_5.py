@@ -1,7 +1,6 @@
 from pathlib import Path
-
 import dash
-from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH, ALL
+from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH, ALL, callback
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
@@ -22,9 +21,8 @@ import shapely
 import hashlib
 import jcmwave
 
-dash.register_page(__name__, path = '/page_5')
-app = dash.get_app()
-server = app.server
+dash.register_page(__name__, path='/page_5')
+
 
 layout = html.Div([
     html.Hr(),
@@ -39,20 +37,19 @@ layout = html.Div([
         dcc.Loading(
             type='circle',
             children=[
-                dcc.Graph(id = 'jcm_mesh_output', className='output', style={"height": "480px", "width": "640px", "display": "block"}, config={'displayModeBar': False}),
-                dcc.Graph(id = 'jcm_intensity_output', className='output', style={"height": "480px", "width": "640px", "display": "none"}, config={'displayModeBar': False}),
+                dcc.Graph(id='jcm_mesh_output', className='output', style={"height": "480px", "width": "640px", "display": "block"}, config={'displayModeBar': False}),
+                dcc.Graph(id='jcm_intensity_output', className='output', style={"height": "480px", "width": "640px", "display": "none"}, config={'displayModeBar': False}),
             ]
         ),
     ])
 ])
 
 def order_lexicographically(points, start=0.0, return_sort_indices=False):
-    angle = np.angle( (points[:,0]+1j*points[:,1])*np.exp(1j*(np.pi+1e-3+start)))
+    angle = np.angle((points[:,0]+1j*points[:,1])*np.exp(1j*(np.pi+1e-3+start)))
     angle = np.round(angle, 3)
     radius = np.linalg.norm(points, axis=1)
     angle[np.isclose(radius, 0.)] = -np.pi
     sort_indices = np.lexsort((radius, angle))
-    #sort_indices = np.argsort(angle)
     all_data = np.round(np.vstack([points.T, angle, radius]).T, 3)
     if return_sort_indices:
         return points[sort_indices, :], sort_indices
@@ -80,9 +77,12 @@ def polygon_orientation(vertices):
     else:
         return "DEGENERATE"
 
-def run_jcmwave_simulation(threshold_data, project):
-    keys = {}
+def run_jcmwave_simulation(project):
+    threshold_data = session.get('current_threshold_image2', None)
+    if threshold_data is None:
+        raise PreventUpdate()
 
+    keys = {}
     keys['cd_width'] = 6
     keys['cd_height'] = 4.5
     keys['user_area_width'] = keys['cd_width'] - 2
@@ -106,17 +106,24 @@ def run_jcmwave_simulation(threshold_data, project):
     image_width_without_buffer = image_width - image_buffer
     image_height_without_buffer = image_height - image_buffer
     keys['polygons'] = []
+    
     print('image shape: {}'.format(threshold_data.shape))
     print('image dimensions: {} x {}'.format(image_width, image_height))
     print('image width without buffer: {}, image height without buffer: {}'.format(image_width_without_buffer, image_height_without_buffer))
+    
+    min_size_val = session.get('slider_min_size', 0.4)
+    simplify_val = session.get('slider_simplify', 0.1)
+
     contours = ski.measure.find_contours(threshold_data.T, 0.5)
     for contour in contours:
         p = shapely.Polygon(contour)
-        if p.area > 10:
-            p2 = p.simplify(1)
+        
+        min_area_threshold = min_size_val * 100  
+        if p.area > min_area_threshold:
+            simplify_tolerance = simplify_val * 5.0  
+            p2 = p.simplify(simplify_tolerance)
             keys['polygons'].append(p2)
 
-    # determine nesting level which will be used to set polygon domain Id in jcm file.
     nesting_levels = {}
     for i, poly in enumerate(keys['polygons']):
         nesting_levels[i] = 0
@@ -124,7 +131,6 @@ def run_jcmwave_simulation(threshold_data, project):
             if i != j and poly.within(other_poly):
                 nesting_levels[i] += 1
 
-    # convert to numpy arrays and flip y axis to match jcmwave coordinate system where y increases upwards
     np_polys = []
     for i, poly in enumerate(keys['polygons']):
         c = np.array(poly.exterior.coords)
@@ -133,18 +139,15 @@ def run_jcmwave_simulation(threshold_data, project):
         np_polys.append(np.ceil(c))
     keys['polygons'] = np_polys
 
-    # order the vertices in couterclockwise order starting from the point with the smallest angle to the x-axis
     for i, poly in enumerate(keys['polygons']):
         orientation = polygon_orientation(poly)
         if orientation == "CW":
             poly = poly[::-1]
         keys['polygons'][i] = poly
 
-    # now convert the coordinates from pixel coordinates to physical coordinates in micrometers.
     for polygon in keys['polygons']:
         print('polygon ymin: {}, ymax: {}, x min: {}, x max: {}'.format(np.min(polygon[:, 1]), np.max(polygon[:, 1]), np.min(polygon[:, 0]), np.max(polygon[:, 0])))
         polygon[:, 0] = (polygon[:, 0]- (half_buffer+1) )/ (image_width_without_buffer-1) * keys['user_area_width'] + 1 - keys['cd_width']/2
-        #polygon[:, 0] = (polygon[:, 0]- half_buffer )/ image_width_without_buffer * keys['user_area_width'] + 1 - keys['cd_width']/2
         polygon[:, 1] = (polygon[:, 1]- (half_buffer+1) )/ (image_height_without_buffer-1) * keys['user_area_height'] + 0.75 - keys['cd_height']/2
 
     keys['polygons'] = list(zip(keys['polygons'], nesting_levels.values()))
@@ -153,8 +156,6 @@ def run_jcmwave_simulation(threshold_data, project):
     with open(os.path.join(project, 'layout.jcm'), encoding='utf-8') as f:
         text = f.read()
     hash_value = hashlib.sha256(text.encode('utf-8')).hexdigest()
-
-    #jcmwave.geo('.')
 
     if 'simulation_hash' in session and hash_value == session['simulation_hash']:
         cart_field = jcmwave.loadcartesianfields(
@@ -206,9 +207,7 @@ def make_grid_plot(grid_tables):
     color_index = grid_tables[1]['DomainId']
 
     palette = qualitative.Plotly
-
     unique_colors = np.unique(color_index)
-
     color_map = {
         c: palette[i % len(palette)]
         for i, c in enumerate(unique_colors)
@@ -216,28 +215,12 @@ def make_grid_plot(grid_tables):
 
     fig = go.Figure()
 
-    # for tri, c in zip(triangles, color_index):
-    #     pts = vertices[tri]
-
-    #     fig.add_trace(
-    #         go.Scatter(
-    #             x=np.r_[pts[:, 0], pts[0, 0]],
-    #             y=np.r_[pts[:, 1], pts[0, 1]],
-    #             fill='toself',
-    #             mode='lines',
-    #             line=dict(color='black'),
-    #             fillcolor=palette[c % len(palette)],
-    #             showlegend=False
-    #         )
-    #     )
-
     for color_id in np.unique(color_index):
         xs = []
         ys = []
 
         for tri in triangles[color_index == color_id]:
             pts = vertices[tri]
-
             xs.extend([pts[0,0], pts[1,0], pts[2,0], pts[0,0], None])
             ys.extend([pts[0,1], pts[1,1], pts[2,1], pts[0,1], None])
 
@@ -258,23 +241,15 @@ def make_grid_plot(grid_tables):
 
     for tri in triangles:
         pts = vertices[tri]
-
         edge_x.extend([
-            pts[0, 0], pts[1, 0],
-            None,
-            pts[1, 0], pts[2, 0],
-            None,
-            pts[2, 0], pts[0, 0],
-            None
+            pts[0, 0], pts[1, 0], None,
+            pts[1, 0], pts[2, 0], None,
+            pts[2, 0], pts[0, 0], None
         ])
-
         edge_y.extend([
-            pts[0, 1], pts[1, 1],
-            None,
-            pts[1, 1], pts[2, 1],
-            None,
-            pts[2, 1], pts[0, 1],
-            None
+            pts[0, 1], pts[1, 1], None,
+            pts[1, 1], pts[2, 1], None,
+            pts[2, 1], pts[0, 1], None
         ])
 
     fig.add_trace(
@@ -290,17 +265,11 @@ def make_grid_plot(grid_tables):
 
     xmin, ymin = vertices.min(axis=0)
     xmax, ymax = vertices.max(axis=0)
-
-    # optional small padding
-    #pad = 0.02 * max(xmax - xmin, ymax - ymin)
     pad = 0.
 
     fig.update_xaxes(range=[xmin - pad, xmax + pad])
     fig.update_yaxes(range=[ymin - pad, ymax + pad])
-
-    # keep aspect ratio
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
-    #fig.update_yaxes(scaleanchor="x", scaleratio=1)
 
     fig.update_layout(coloraxis_showscale=False)
     fig.update_xaxes(showticklabels=False)
@@ -317,11 +286,10 @@ def make_grid_plot(grid_tables):
     return fig
 
 
-@app.callback([Output(component_id='jcm_mesh_output', component_property= 'style'),
+@dash.callback([Output(component_id='jcm_mesh_output', component_property= 'style'),
                Output(component_id='jcm_intensity_output', component_property= 'style')
               ],
-              [Input("plot-type-dropdown", "value"),
-                ])
+              [Input("plot-type-dropdown", "value")])
 def swap_displayed_data(plot_type):
     if plot_type == "Simulation Mesh":
         return {"height": "480px", "width": "640px", "display": "block"}, {"height": "480px", "width": "640px", "display": "none"}
@@ -330,44 +298,35 @@ def swap_displayed_data(plot_type):
     else:
         raise PreventUpdate()
 
-@app.callback([Output(component_id='jcm_mesh_output', component_property= 'figure'),
+@dash.callback([Output(component_id='jcm_mesh_output', component_property= 'figure'),
                Output(component_id='jcm_intensity_output', component_property= 'figure')
               ],
               [Input('current-page-store', 'data'),
                Input('plot-type-dropdown', 'value'),
-               Input('dropdown-selection-store', 'data')
-                ])
-def make_jcmwave_simulation(data, plot_type, selected_option):
+               Input('dropdown-selection-store', 'data'),
+               Input('slider-hsv-store', 'data'),  
+               Input('slider-geo-store', 'data')   
+              ])
+def make_jcmwave_simulation(data, plot_type, selected_option, hsv_store_data, geo_store_data):
+    if hsv_store_data is None or geo_store_data is None:
+        raise PreventUpdate()
+    
     print("selected option: ", selected_option)
-    print('make_jcmwave_simulation was called')
-    print('Value of data: ', data, type(data))
-    if data is None:
+    
+    if data is None or not data == 5:
         raise PreventUpdate()
-    elif not data == 5:
+        
+    if 'current_threshold_image2' not in session:
         raise PreventUpdate()
-    else:
-        try:
-            threshold_data = session['current_threshold_image']
-            print('Reached')
-        except:
-            raise PreventUpdate()
 
-
-        print('img data shape: {}'.format(threshold_data.shape))
-        for ii in range(1):
-            print(ii, np.min(threshold_data), np.max(threshold_data))
-
-        match selected_option:
-            case "btn-opt-a":
-                project = "jcmwave"
-            case "btn-opt-b":
-                project = os.path.join('jcmwave2', '2D')
-        field_data, grid_tables, is_updated = run_jcmwave_simulation(threshold_data, project)
-        if is_updated:
-            fig1 = make_grid_plot(grid_tables)
-            fig2 = make_field_data_plot(field_data)
-        else:
-            raise PreventUpdate()
-
+    match selected_option:
+        case "btn-opt-a": project = "jcmwave"
+        case "btn-opt-b": project = os.path.join('jcmwave2', '2D')
+        case _: project = "jcmwave"
+    
+    field_data, grid_tables, is_updated = run_jcmwave_simulation(project)
+    
+    fig1 = make_grid_plot(grid_tables)
+    fig2 = make_field_data_plot(field_data)
 
     return [fig1, fig2]

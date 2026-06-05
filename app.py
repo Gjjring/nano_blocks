@@ -26,7 +26,7 @@ import skimage as ski
 import shapely
 import jcmwave
 
-app = Dash(__name__, use_pages = True, suppress_callback_exceptions = True)
+app = Dash(__name__, use_pages = True, suppress_callback_exceptions=True)
 server = app.server
 
 server.config['SESSION_TYPE'] = 'filesystem'
@@ -43,9 +43,13 @@ app.layout = html.Div(id = 'site', children = [
     dcc.Store(id='raw_image_data'),
     dcc.Store(id='threshold_color'),
     dcc.Store(id='current-page-store', data = 1),
-    dcc.Store(id='inner-tab-store', data='camera'),
+    dcc.Store(id='inner-tab-store1', data='camera'),
+    dcc.Store(id='inner-tab-store2', data='adjust1'),
     dcc.Store(id='blocked_tabs', data=False, storage_type='session'),
     dcc.Store(id='dropdown-selection-store', data='btn-opt-a'),
+
+    dcc.Store(id='slider-hsv-store', data={'hue': [0.4, 0.5], 'sat': [0.5, 1.0], 'val': [0.1, 1.0]}),
+    dcc.Store(id='slider-geo-store', data={'min_size': 0.4, 'simplify': 0.1, 'blur': 0.12}),
 
     dcc.Store(id='initial-load-detector', data=False, storage_type='memory'),
     dcc.Location(id='url', refresh=False),
@@ -93,29 +97,50 @@ app.layout = html.Div(id = 'site', children = [
     Output('btn-prev', 'disabled'),        
     Output('btn-next', 'disabled'),        
     Output('blocked_tabs', 'data'),
+    Output('inner-tab-store2', 'data'),
     Input('btn-prev', 'n_clicks'),
     Input('btn-next', 'n_clicks'),
     Input('page-tabs', 'value'),
     State('current-page-store', 'data'),
     State('blocked_tabs', 'data'),
+    State('inner-tab-store2', 'data'),
     prevent_initial_call=True
 )
-def sync_navigation(prev_clicks, next_clicks, tab_value, current_page, blocked_tabs):
+def sync_navigation(prev_clicks, next_clicks, tab_value, current_page, blocked_tabs, sub_tab2):
     triggered_id = ctx.triggered_id
 
-    if triggered_id == 'btn-next' and current_page < 5:
+    if triggered_id == 'btn-next' and current_page == 4:
+        if sub_tab2 == 'adjust1':
+            sub_tab2 = 'adjust2'
+        else:
+            current_page += 1
+            
+    elif triggered_id == 'btn-prev' and current_page == 5:
+        current_page -= 1
+        sub_tab2 = 'adjust2'
+        
+    elif triggered_id == 'btn-prev' and current_page == 4:
+        if sub_tab2 == 'adjust2':
+            sub_tab2 = 'adjust1'
+        else:
+            current_page -= 1
+
+    elif triggered_id == 'btn-next' and current_page < 5:
         current_page += 1
     elif triggered_id == 'btn-prev' and current_page > 1:
         current_page -= 1
     elif triggered_id == 'page-tabs':
         current_page = int(tab_value)
-    
+        if current_page == 4:
+            sub_tab2 = 'adjust1'
+
     if current_page == 1:
         target_path = '/'
     else:
         target_path = f'/page_{current_page}'
 
     indicator_text = f'Page {current_page} of 5'
+    
     disable_prev = (current_page == 1)
     disable_next = (current_page == 5)
  
@@ -123,7 +148,8 @@ def sync_navigation(prev_clicks, next_clicks, tab_value, current_page, blocked_t
         disable_next = True
 
     update_tab_value = str(current_page)
-    return target_path, current_page, update_tab_value, indicator_text, disable_prev, disable_next, blocked_tabs
+    
+    return target_path, current_page, update_tab_value, indicator_text, disable_prev, disable_next, blocked_tabs, sub_tab2
 
 @app.callback(
     Output('btn-next', 'disabled', allow_duplicate=True),

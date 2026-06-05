@@ -1,5 +1,5 @@
 import dash
-from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH, ALL
+from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH, ALL, callback
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
@@ -20,8 +20,7 @@ import shapely
 import jcmwave
 
 dash.register_page(__name__, path = '/page_4')
-app = dash.get_app()
-server = app.server
+
 
 layout = html.Div([
     dcc.Tabs(id = 'adjusting-tabs', value = 'adjust1', children=[
@@ -81,7 +80,7 @@ layout = html.Div([
                     width=1
                     ),
                 dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.4, 0.5], marks=None, allowCross=False, id='min-size_slider')
+                        dcc.Slider(0, 100, 1, value=40, marks=None, id='min-size_slider'),
                         ],
                     width=7
                     ),
@@ -95,7 +94,7 @@ layout = html.Div([
                     width=1
                     ),
                 dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.4, 0.5], marks=None, allowCross=False, id='simplify_slider')
+                        dcc.Slider(0, 3.0, 0.1, value=0.1, marks=None, id='simplify_slider'),
                         ],
                     width=7
                     ),
@@ -109,7 +108,7 @@ layout = html.Div([
                     width=1
                     ),
                 dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.5, 1.0], marks=None, allowCross=False, id='blur_slider')
+                        dcc.Slider(0, 1.0, 0.01, value=0.5, marks=None, id='blur_slider'),
                         ],
                     width=7
                     ),
@@ -120,15 +119,25 @@ layout = html.Div([
     ])
 ])
 
+@callback(
+    Output('deine-inneren-tabs-id', 'value'),
+    Input('inner-tab-store2', 'data')
+)
+def sync_inner_tabs(store_data):
+    return store_data
 
-@app.callback(
+
+@dash.callback(
     Output('hue_slider', 'value'),
     Output('saturation_slider', 'value'),
     Output('value_slider', 'value'),
     Input('threshold_color', 'data'),
-    Input('hue_slider', 'id')
+    Input('current-page-store', 'data')
 )
-def initialize_or_restore_sliders(target_color, page_init):
+def initialize_or_restore_sliders(target_color, current_page):
+    if current_page != 4:
+        raise PreventUpdate
+
     active_img_id = session.get('active_image_id', None)
     last_img_id = session.get('slider_last_image_id', None)
 
@@ -160,11 +169,13 @@ def initialize_or_restore_sliders(target_color, page_init):
 
 
 
-@app.callback(Output(component_id='threshold-image1', component_property= 'figure'),
+@dash.callback(Output(component_id='threshold-image1', component_property= 'figure'),
+              Output('slider-hsv-store', 'data'),
               Input('hue_slider', 'value'),
               Input('saturation_slider', 'value'),
               Input('value_slider', 'value'),
-              Input('dropdown-selection-store', 'data')
+              Input('dropdown-selection-store', 'data'),
+              prevent_initial_call=True,
               )
 def make_threshold_image(hue_range, saturation_range, value_range, task_selection):
     try:
@@ -202,7 +213,6 @@ def make_threshold_image(hue_range, saturation_range, value_range, task_selectio
     except:
         binary_mask = np.zeros(np_data.shape[:2], dtype=bool)
         print ('BINARY MASK: ', binary_mask)
-    #binary_mask = ski.filters.gaussian(binary_mask, sigma=3.0)
     edge = 20
     half_edge = int(edge/2)
     ix, iy = binary_mask.shape
@@ -220,8 +230,8 @@ def make_threshold_image(hue_range, saturation_range, value_range, task_selectio
     fig = px.imshow(
         new_mask,
         color_continuous_scale=[
-            [0.0, colors[0]],  # value 0
-            [1.0, colors[1]],  # value 1
+            [0.0, colors[0]],
+            [1.0, colors[1]],
         ],
         zmin=0.,
         zmax=1.0,
@@ -262,6 +272,208 @@ def make_threshold_image(hue_range, saturation_range, value_range, task_selectio
     fig.update_layout(coloraxis_showscale=False)
     fig.update_xaxes(showticklabels=False)
     fig.update_yaxes(showticklabels=False)
-    return fig
 
-app.callback
+    slider_data = {'hue': hue_range, 'sat': saturation_range, 'val': value_range}
+    return fig, slider_data
+
+
+# 2. Adjust
+@dash.callback(
+    Output('min-size_slider', 'value'),
+    Output('simplify_slider', 'value'),
+    Output('blur_slider', 'value'),
+    Input('threshold-image2', 'id'),
+    Input('current-page-store', 'data')
+)
+def initialize_or_restore_sliders2(page_init, current_page):
+    if current_page != 4:
+        raise PreventUpdate
+
+    active_img_id = session.get('active_image_id', None)
+    last_img_id = session.get('slider2_last_image_id', None)
+
+    default_min_size = 0.4
+    default_simplify = 0.1
+    default_blur     = 0.12
+
+    if active_img_id == last_img_id and last_img_id is not None:
+        min_size = session.get('slider_min_size', default_min_size)
+        simplify = session.get('slider_simplify', default_simplify)
+        blur     = session.get('slider_blur', default_blur)
+        return min_size, simplify, blur
+    else:
+        session['slider2_last_image_id'] = active_img_id
+        session['slider_min_size'] = default_min_size
+        session['slider_simplify'] = default_simplify
+        session['slider_blur'] = default_blur
+        session.modified = True
+        return default_min_size, default_simplify, default_blur
+    
+
+@dash.callback(
+    Output(component_id='threshold-image2', component_property='figure'),
+    Output('slider-geo-store', 'data'),
+    Input('dropdown-selection-store', 'data'),
+    Input('inner-tab-store2', 'data'),
+    Input('min-size_slider', 'value'),
+    Input('simplify_slider', 'value'),
+    Input('blur_slider', 'value'),
+    State('current-page-store', 'data'),
+    prevent_initial_call=True,
+)
+def make_threshold_image2(task_selection, current_subpage, current_page, min_size_val, simplify_val, blur_val):
+    if current_page != 4:
+        raise PreventUpdate
+        
+    if min_size_val is None: min_size_val = 0.4
+    if simplify_val is None: simplify_val = 0.1
+    if blur_val is None: blur_val = 0.12
+
+    session['slider_min_size'] = min_size_val
+    session['slider_simplify'] = simplify_val
+    session['slider_blur'] = blur_val
+
+    if blur_val > 0:
+        binary_mask = ski.filters.gaussian(binary_mask, sigma=blur_val * 5.0)
+        binary_mask = (binary_mask > 0.5).astype(np.int64)
+    else:
+        binary_mask = binary_mask.astype(np.int64)
+
+    session['current_threshold_image2'] = binary_mask
+    session.modified = True
+
+    image_width = binary_mask.shape[1]
+    image_height = binary_mask.shape[0]
+    image_buffer  = 20
+    half_buffer = int(image_buffer / 2)
+    image_width_without_buffer = image_width - image_buffer
+    image_height_without_buffer = image_height - image_buffer
+    keys = {}
+    keys['polygons'] = []
+    
+    print('image shape: {}'.format(binary_mask.shape))
+    print('image dimensions: {} x {}'.format(image_width, image_height))
+    print('image width without buffer: {}, image height without buffer: {}'.format(image_width_without_buffer, image_height_without_buffer))
+    
+    min_size_val = session.get('slider_min_size', 0.4)
+    simplify_val = session.get('slider_simplify', 0.1)
+
+    contours = ski.measure.find_contours(binary_mask.T, 0.5)
+    for contour in contours:
+        p = shapely.Polygon(contour)
+        
+        min_area_threshold = min_size_val * 100  
+        if p.area > min_area_threshold:
+            simplify_tolerance = simplify_val * 5.0  
+            p2 = p.simplify(simplify_tolerance)
+            keys['polygons'].append(p2)
+
+    nesting_levels = {}
+    for i, poly in enumerate(keys['polygons']):
+        nesting_levels[i] = 0
+        for j, other_poly in enumerate(keys['polygons']):
+            if i != j and poly.within(other_poly):
+                nesting_levels[i] += 1
+
+    np_polys = []
+    for i, poly in enumerate(keys['polygons']):
+        c = np.array(poly.exterior.coords)
+        c = c[:-1, :]
+        c[:, 1] = image_height-c[:, 1]
+        np_polys.append(np.ceil(c))
+    keys['polygons'] = np_polys
+
+    for i, poly in enumerate(keys['polygons']):
+        orientation = polygon_orientation(poly)
+        if orientation == "CW":
+            poly = poly[::-1]
+        keys['polygons'][i] = poly
+
+    palette = qualitative.Safe
+    palette2 = qualitative.Alphabet
+    colors = [palette2[8], palette[0]]
+
+    h, w = binary_mask.shape[:2]
+
+    fig = go.Figure()
+
+    for polygon in keys['polygons']:
+        closed_polygon = np.vstack([polygon, polygon[0]])
+
+        x_coords = closed_polygon[:, 0]
+        y_coords = closed_polygon[:, 1]
+        
+        fig.add_trace(go.Scatter(
+            x=x_coords, 
+            y=y_coords, 
+            fill="toself",              
+            fillcolor="rgba(0, 123, 255, 0.4)", 
+            line=dict(color="blue", width=3),   
+            mode="lines+markers", 
+        ))
+
+    fig.update_layout(
+        xaxis=dict(
+            range=[0, w], 
+            showgrid=False, 
+            mirror=True, 
+            showline=True, 
+            linecolor='black',
+            scaleanchor="y",  
+            scaleratio=1
+        ),
+        yaxis=dict(
+            range=[0, h], 
+            showgrid=False, 
+            mirror=True, 
+            showline=True, 
+            linecolor='black'
+        ),
+        
+        plot_bgcolor="white",
+        
+        width=800,
+        height=int(800 * (h / w)),
+        
+        showlegend=True
+    )
+
+    match task_selection:
+        case "btn-opt-a": task_src = '/assets/aufgabe0.png'
+        case "btn-opt-b": task_src = '/assets/aufgabe1.png'
+        case "btn-opt-c": task_src = '/assets/aufgabe2.png'
+        case "btn-opt-d": task_src = '/assets/aufgabe3.png'
+        case _ : task_src = '/assets/aufgabe0.png'
+
+    fig.update_layout(
+        images=[dict(source=task_src, xref="paper", yref="paper", x=0.5, y=0.5, sizex=1.5, sizey=1.5, xanchor="center", yanchor="middle")],
+        margin=dict(t=100, b=100, l=50, r=50),
+        coloraxis_showscale=False
+    )
+    fig.update_xaxes(showticklabels=False)
+    fig.update_yaxes(showticklabels=False)
+    
+    geo_data = {'min_size': min_size_val, 'simplify': simplify_val, 'blur': blur_val}
+
+    return fig, geo_data
+
+
+def polygon_orientation(vertices):
+    """
+    vertices: list of (x, y) tuples
+    returns: 'CCW', 'CW', or 'DEGENERATE'
+    """
+    area2 = 0
+
+    n = len(vertices)
+    for i in range(n):
+        x1, y1 = vertices[i]
+        x2, y2 = vertices[(i + 1) % n]
+        area2 += x1 * y2 - x2 * y1
+
+    if area2 > 0:
+        return "CCW"
+    elif area2 < 0:
+        return "CW"
+    else:
+        return "DEGENERATE"

@@ -42,7 +42,7 @@ layout = html.Div([
             ]),
             ]),
             
-            
+        
             ]),
         ]),
 
@@ -111,7 +111,7 @@ layout = html.Div([
 ])
 
 @app.callback(
-    Output('inner-tab-store', 'data'),
+    Output('inner-tab-store1', 'data'),
     Input('image-tabs', 'value'),
     prevent_initial_call=True,
     suppress_callback_exceptions=True
@@ -129,7 +129,7 @@ app.clientside_callback(
     ),
     Output('camera-start-dummy', 'children'),
     Input('current-page-store', 'data'),
-    Input('inner-tab-store', 'data'),
+    Input('inner-tab-store1', 'data'),
     prevent_initial_call=True
 )
 

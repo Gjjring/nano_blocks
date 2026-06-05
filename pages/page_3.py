@@ -29,7 +29,6 @@ layout = html.Div([
             
             dbc.Row([
         
-            # Linke Spalte (Breite 3 von 12) für die quadratischen Farbanzeigen
             dbc.Col([
                 html.Button(
                     '', id='temporary_color_output',
