@@ -286,7 +286,7 @@ def make_grid_plot(grid_tables):
     return fig
 
 
-@dash.callback([Output(component_id='jcm_mesh_output', component_property= 'style'),
+@callback([Output(component_id='jcm_mesh_output', component_property= 'style'),
                Output(component_id='jcm_intensity_output', component_property= 'style')
               ],
               [Input("plot-type-dropdown", "value")])
@@ -298,7 +298,7 @@ def swap_displayed_data(plot_type):
     else:
         raise PreventUpdate()
 
-@dash.callback([Output(component_id='jcm_mesh_output', component_property= 'figure'),
+@callback([Output(component_id='jcm_mesh_output', component_property= 'figure'),
                Output(component_id='jcm_intensity_output', component_property= 'figure')
               ],
               [Input('current-page-store', 'data'),

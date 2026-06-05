@@ -26,7 +26,7 @@ import skimage as ski
 import shapely
 import jcmwave
 
-app = Dash(__name__, use_pages = True, suppress_callback_exceptions=True)
+app = Dash(__name__, use_pages=True, suppress_callback_exceptions=True)
 server = app.server
 
 server.config['SESSION_TYPE'] = 'filesystem'
@@ -47,6 +47,7 @@ app.layout = html.Div(id = 'site', children = [
     dcc.Store(id='inner-tab-store2', data='adjust1'),
     dcc.Store(id='blocked_tabs', data=False, storage_type='session'),
     dcc.Store(id='dropdown-selection-store', data='btn-opt-a'),
+
 
     dcc.Store(id='slider-hsv-store', data={'hue': [0.4, 0.5], 'sat': [0.5, 1.0], 'val': [0.1, 1.0]}),
     dcc.Store(id='slider-geo-store', data={'min_size': 0.4, 'simplify': 0.1, 'blur': 0.12}),
@@ -89,6 +90,7 @@ app.layout = html.Div(id = 'site', children = [
 
 ])
 
+
 @app.callback(
     Output('_pages_location', 'pathname', allow_duplicate=True), 
     Output('current-page-store', 'data'),   
@@ -108,11 +110,17 @@ app.layout = html.Div(id = 'site', children = [
 )
 def sync_navigation(prev_clicks, next_clicks, tab_value, current_page, blocked_tabs, sub_tab2):
     triggered_id = ctx.triggered_id
+    
+    # Standardmäßig wollen wir die URL nicht verändern, außer wir wechseln die Page
+    target_path = no_update 
 
     if triggered_id == 'btn-next' and current_page == 4:
         if sub_tab2 == 'adjust1':
             sub_tab2 = 'adjust2'
+            # WICHTIG: Kein Seitenwechsel! Wir bleiben auf Page 4, ändern nur den Store
+            return target_path, current_page, str(current_page), f'Page {current_page} (Teil 2) of 5', False, False, blocked_tabs, sub_tab2
         else:
+            # Wenn wir schon auf adjust2 waren, gehen wir jetzt hoch auf Page 5
             current_page += 1
             
     elif triggered_id == 'btn-prev' and current_page == 5:
@@ -122,6 +130,8 @@ def sync_navigation(prev_clicks, next_clicks, tab_value, current_page, blocked_t
     elif triggered_id == 'btn-prev' and current_page == 4:
         if sub_tab2 == 'adjust2':
             sub_tab2 = 'adjust1'
+            # Auch hier: Nur intern zurückschalten, kein Seiten-Reload
+            return target_path, current_page, str(current_page), f'Page {current_page} (Teil 1) of 5', False, False, blocked_tabs, sub_tab2
         else:
             current_page -= 1
 
@@ -134,13 +144,13 @@ def sync_navigation(prev_clicks, next_clicks, tab_value, current_page, blocked_t
         if current_page == 4:
             sub_tab2 = 'adjust1'
 
+    # Pfad-Zuweisung NUR berechnen, wenn sich die Seitenzahl wirklich geändert hat
     if current_page == 1:
         target_path = '/'
     else:
         target_path = f'/page_{current_page}'
 
     indicator_text = f'Page {current_page} of 5'
-    
     disable_prev = (current_page == 1)
     disable_next = (current_page == 5)
  
