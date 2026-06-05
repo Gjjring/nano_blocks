@@ -28,7 +28,7 @@ layout = html.Div([
     html.Hr(),
 
     dcc.Dropdown(
-        options=['Simulation Mesh', 'Intensity'],
+        options=['Simulation Mesh', 'Intensity', 'Log Intensity'],
         value='Simulation Mesh',
         id='plot-type-dropdown',
         style={'width': '300px', 'margin': '0 auto'}
@@ -37,8 +37,10 @@ layout = html.Div([
         dcc.Loading(
             type='circle',
             children=[
-                dcc.Graph(id='jcm_mesh_output', className='output', style={"height": "480px", "width": "640px", "display": "block"}, config={'displayModeBar': False}),
-                dcc.Graph(id='jcm_intensity_output', className='output', style={"height": "480px", "width": "640px", "display": "none"}, config={'displayModeBar': False}),
+                html.Button("", id='transmission-btn', style={"display": "none"},disabled=True),
+                dcc.Graph(id = 'jcm_mesh_output', className='output', style={"height": "480px", "width": "640px", "display": "block"}, config={'displayModeBar': False}),
+                dcc.Graph(id = 'jcm_intensity_output', className='output', style={"height": "480px", "width": "640px", "display": "none"}, config={'displayModeBar': False}),
+                dcc.Graph(id = 'jcm_log_intensity_output', className='output', style={"height": "480px", "width": "640px", "display": "none"}, config={'displayModeBar': False}),
             ]
         ),
     ])
@@ -77,10 +79,8 @@ def polygon_orientation(vertices):
     else:
         return "DEGENERATE"
 
-def run_jcmwave_simulation(project):
-    threshold_data = session.get('current_threshold_image2', None)
-    if threshold_data is None:
-        raise PreventUpdate()
+def run_jcmwave_simulation(threshold_data, poly_data, project, port):
+    keys = {}
 
     keys = {}
     keys['cd_width'] = 6
@@ -105,46 +105,63 @@ def run_jcmwave_simulation(project):
     half_buffer = int(image_buffer / 2)
     image_width_without_buffer = image_width - image_buffer
     image_height_without_buffer = image_height - image_buffer
-    keys['polygons'] = []
-    
+    # keys['polygons'] = []
+
     print('image shape: {}'.format(threshold_data.shape))
     print('image dimensions: {} x {}'.format(image_width, image_height))
     print('image width without buffer: {}, image height without buffer: {}'.format(image_width_without_buffer, image_height_without_buffer))
-    
-    min_size_val = session.get('slider_min_size', 0.4)
-    simplify_val = session.get('slider_simplify', 0.1)
 
-    contours = ski.measure.find_contours(threshold_data.T, 0.5)
-    for contour in contours:
-        p = shapely.Polygon(contour)
-        
-        min_area_threshold = min_size_val * 100  
-        if p.area > min_area_threshold:
-            simplify_tolerance = simplify_val * 5.0  
-            p2 = p.simplify(simplify_tolerance)
-            keys['polygons'].append(p2)
+    # min_size_val = session.get('slider_min_size', 0.4)
+    # simplify_val = session.get('slider_simplify', 0.1)
+
+    # contours = ski.measure.find_contours(threshold_data.T, 0.5)
+    # for contour in contours:
+    #     p = shapely.Polygon(contour)
+
+    #     min_area_threshold = min_size_val * 100
+    #     if p.area > min_area_threshold:
+    #         simplify_tolerance = simplify_val * 5.0
+    #         p2 = p.simplify(simplify_tolerance)
+    #         keys['polygons'].append(p2)
+
+    # nesting_levels = {}
+    # for i, poly in enumerate(keys['polygons']):
+    #     nesting_levels[i] = 0
+    #     for j, other_poly in enumerate(keys['polygons']):
+    #         if i != j and poly.within(other_poly):
+    #             nesting_levels[i] += 1
+
+    # np_polys = []
+    # for i, poly in enumerate(keys['polygons']):
+    #     c = np.array(poly.exterior.coords)
+    #     c = c[:-1, :]
+    #     c[:, 1] = image_height-c[:, 1]
+    #     np_polys.append(np.ceil(c))
+    # keys['polygons'] = np_polys
+
+    # for i, poly in enumerate(keys['polygons']):
+    #     orientation = polygon_orientation(poly)
+    #     if orientation == "CW":
+    #         poly = poly[::-1]
+    #     keys['polygons'][i] = poly
+
+    keys['polygons'] = poly_data
 
     nesting_levels = {}
-    for i, poly in enumerate(keys['polygons']):
+    shapely_polygons = []
+    for poly in keys['polygons']:
+        shapely_polygons.append(shapely.Polygon(poly))
+
+    for i, poly in enumerate(shapely_polygons):
         nesting_levels[i] = 0
-        for j, other_poly in enumerate(keys['polygons']):
+        for j, other_poly in enumerate(shapely_polygons):
             if i != j and poly.within(other_poly):
                 nesting_levels[i] += 1
 
-    np_polys = []
-    for i, poly in enumerate(keys['polygons']):
-        c = np.array(poly.exterior.coords)
-        c = c[:-1, :]
-        c[:, 1] = image_height-c[:, 1]
-        np_polys.append(np.ceil(c))
-    keys['polygons'] = np_polys
 
-    for i, poly in enumerate(keys['polygons']):
-        orientation = polygon_orientation(poly)
-        if orientation == "CW":
-            poly = poly[::-1]
-        keys['polygons'][i] = poly
-
+    print(f"half_buffer :{half_buffer}")
+    print(f"image_width_without_buffer: {image_width_without_buffer}")
+    print(f"user area width: {keys['user_area_width']}")
     for polygon in keys['polygons']:
         print('polygon ymin: {}, ymax: {}, x min: {}, x max: {}'.format(np.min(polygon[:, 1]), np.max(polygon[:, 1]), np.min(polygon[:, 0]), np.max(polygon[:, 0])))
         polygon[:, 0] = (polygon[:, 0]- (half_buffer+1) )/ (image_width_without_buffer-1) * keys['user_area_width'] + 1 - keys['cd_width']/2
@@ -162,6 +179,8 @@ def run_jcmwave_simulation(project):
             os.path.join(project, 'project_results', 'field.jcm')
         )
         grid_tables = jcmwave.loadtable(os.path.join(project, 'grid_table.jcm'))
+        if port is not None:
+            mode_overlap = jcmwave.loadtable(os.path.join(project, 'overlap_transm.jcm'))
         is_updated = False
     else:
         jcmwave.geo(os.path.join(project), keys=keys)
@@ -171,16 +190,27 @@ def run_jcmwave_simulation(project):
         session['simulation_hash'] = hash_value
         cart_field = results[1]
         grid_tables = results[2]
+        if port is not None:
+            mode_overlap = results[3]
         is_updated = True
 
     e_field = np.linalg.norm(np.abs(cart_field['field'][0]), axis=2)**2
 
-    return e_field, grid_tables, is_updated
+    if port == "upper left":
+        transmission = np.abs(mode_overlap['ModeCoefficients_Port1_Source'][0][0])
+    elif port == "upper right":
+        transmission = np.abs(mode_overlap['ModeCoefficients_Port3_Source'][0][0])
+    elif port == "lower right":
+        transmission = np.abs(mode_overlap['ModeCoefficients_Port2_Source'][0][0])
+    else:
+        transmission = None
+
+    return e_field, grid_tables, is_updated, transmission
 
 def make_field_data_plot(field_data):
-    zmax = np.max([np.max(field_data)*0.9, 1.0])
+    #zmax = np.max([np.max(field_data)*0.9, 1.0])
+    zmax= None
     fig = px.imshow(field_data.T, origin='lower',
-                    zmin=0., zmax=zmax,
                     color_continuous_scale="turbo")
 
     fig.update_layout(coloraxis_showscale=False)
@@ -205,6 +235,7 @@ def make_grid_plot(grid_tables):
     triangles[:, 2] = grid_tables[1]['Points'][2]
     triangles -= 1
     color_index = grid_tables[1]['DomainId']
+    color_index[color_index==22] = 2
 
     palette = qualitative.Plotly
     unique_colors = np.unique(color_index)
@@ -286,47 +317,83 @@ def make_grid_plot(grid_tables):
     return fig
 
 
-@callback([Output(component_id='jcm_mesh_output', component_property= 'style'),
-               Output(component_id='jcm_intensity_output', component_property= 'style')
+@dash.callback([Output(component_id='jcm_mesh_output', component_property= 'style'),
+               Output(component_id='jcm_intensity_output', component_property= 'style'),
+               Output(component_id='jcm_log_intensity_output', component_property= 'style')
               ],
               [Input("plot-type-dropdown", "value")])
 def swap_displayed_data(plot_type):
     if plot_type == "Simulation Mesh":
-        return {"height": "480px", "width": "640px", "display": "block"}, {"height": "480px", "width": "640px", "display": "none"}
+        return {"height": "480px", "width": "640px", "display": "block"}, {"height": "480px", "width": "640px", "display": "none"}, {"height": "480px", "width": "640px", "display": "none"}
     elif plot_type == "Intensity":
-        return {"height": "480px", "width": "640px", "display": "none"}, {"height": "480px", "width": "640px", "display": "block"}
+        return {"height": "480px", "width": "640px", "display": "none"}, {"height": "480px", "width": "640px", "display": "block"}, {"height": "480px", "width": "640px", "display": "none"}
+    elif plot_type == "Log Intensity":
+        return {"height": "480px", "width": "640px", "display": "none"}, {"height": "480px", "width": "640px", "display": "none"}, {"height": "480px", "width": "640px", "display": "block"}
     else:
         raise PreventUpdate()
 
-@callback([Output(component_id='jcm_mesh_output', component_property= 'figure'),
-               Output(component_id='jcm_intensity_output', component_property= 'figure')
+@dash.callback([Output(component_id='jcm_mesh_output', component_property= 'figure'),
+               Output(component_id='jcm_intensity_output', component_property= 'figure'),
+               Output(component_id='jcm_log_intensity_output', component_property= 'figure'),
+               Output(component_id='transmission-btn', component_property= 'children'),
+               Output(component_id='transmission-btn', component_property= 'style')
               ],
               [Input('current-page-store', 'data'),
                Input('plot-type-dropdown', 'value'),
-               Input('dropdown-selection-store', 'data'),
-               Input('slider-hsv-store', 'data'),  
-               Input('slider-geo-store', 'data')   
-              ])
-def make_jcmwave_simulation(data, plot_type, selected_option, hsv_store_data, geo_store_data):
-    if hsv_store_data is None or geo_store_data is None:
-        raise PreventUpdate()
-    
+               Input('dropdown-selection-store', 'data')
+                ],
+                State("jcm_mesh_output", "figure"))
+def make_jcmwave_simulation(data, plot_type, selected_option, mesh_figure):
+    print(f"current page: {data}")
     print("selected option: ", selected_option)
-    
+
     if data is None or not data == 5:
         raise PreventUpdate()
-        
+
     if 'current_threshold_image2' not in session:
+        print("current threshold image2 missing")
         raise PreventUpdate()
 
-    match selected_option:
-        case "btn-opt-a": project = "jcmwave"
-        case "btn-opt-b": project = os.path.join('jcmwave2', '2D')
-        case _: project = "jcmwave"
-    
-    field_data, grid_tables, is_updated = run_jcmwave_simulation(project)
-    
-    fig1 = make_grid_plot(grid_tables)
-    fig2 = make_field_data_plot(field_data)
+    if "polygons" not in session:
+        print("polygons missing")
+        raise PreventUpdate()
+    threshold_data = session['current_threshold_image2']
+    poly_data = session['polygons']
 
-    return [fig1, fig2]
+    for polygon in poly_data:
+        print('polygon ymin: {}, ymax: {}, x min: {}, x max: {}'.format(np.min(polygon[:, 1]), np.max(polygon[:, 1]), np.min(polygon[:, 0]), np.max(polygon[:, 0])))
+
+    match selected_option:
+        case "btn-opt-a":
+            project = "jcmwave"
+            port = None
+        case "btn-opt-b":
+            project = os.path.join('jcmwave2', '2D')
+            port = "upper left"
+        case "btn-opt-c":
+            project = os.path.join('jcmwave2', '2D')
+            port = "upper right"
+        case "btn-opt-d":
+            project = os.path.join('jcmwave2', '2D')
+            port = "lower right"
+    field_data, grid_tables, is_updated, transmission = run_jcmwave_simulation(threshold_data, poly_data, project, port)
+    if not is_updated:
+        if mesh_figure is None:
+            is_updated = True
+    print("Transmission for port {}: {}".format(port, transmission))
+    if is_updated:
+        fig1 = make_grid_plot(grid_tables)
+        fig2 = make_field_data_plot(field_data)
+        fig3 = make_field_data_plot(np.log10(field_data + 1e-10))
+        if not transmission is None:
+            transmission_text = f"Transmission: {transmission*100:.1f}%"
+            transmission_style = {'display':'block'}
+        else:
+            transmission_text = ""
+            transmission_style = {'display':'none'}
+        # set text of a transmission button to be defined later to show the transmission value for the selected port
+    else:
+        raise PreventUpdate()
+
+
+    return [fig1, fig2, fig3, transmission_text, transmission_style]

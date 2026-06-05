@@ -25,8 +25,12 @@ dash.register_page(__name__, path = '/page_4')
 layout = html.Div([
     dcc.Tabs(id = 'adjusting-tabs', value = 'adjust1', children=[
         dcc.Tab(label = 'Adjust 1', value = 'adjust1', children=[
-            dcc.Graph(id = 'threshold-image1', config={'displayModeBar': False}),
-
+            dcc.Loading(
+                type='circle',
+                children=[
+                    dcc.Graph(id = 'threshold-image1', config={'displayModeBar': False}),
+                ]
+            ),
             dbc.Row([
                 dbc.Col([
                         html.P('Hue', id='hue_label'),
@@ -48,7 +52,7 @@ layout = html.Div([
                     width=1
                     ),
                 dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.5, 1.0], marks=None, allowCross=False, id='saturation_slider')
+                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.05, 1.0], marks=None, allowCross=False, id='saturation_slider')
                         ],
                     width=7
                     ),
@@ -62,7 +66,7 @@ layout = html.Div([
                     width=1
                     ),
                 dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.1, 1.0], marks=None, allowCross=False, id='value_slider')
+                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.05, 1.0], marks=None, allowCross=False, id='value_slider')
                         ],
                     width=7
                     ),
@@ -120,7 +124,7 @@ layout = html.Div([
 ])
 
 @callback(
-    Output('adjusting-tabs', 'value'), 
+    Output('adjusting-tabs', 'value'),
     Input('inner-tab-store2', 'data'),
     prevent_initial_call=False
 )
@@ -145,8 +149,8 @@ def initialize_or_restore_sliders(target_color, current_page):
     last_img_id = session.get('slider_last_image_id', None)
 
     default_hue = [0.4, 0.5]
-    default_sat = [0.5, 1.0]
-    default_val = [0.1, 1.0]
+    default_sat = [0.05, 1.0]
+    default_val = [0.05, 1.0]
 
     if target_color and target_color != 'None' and not any(val is None for val in target_color if isinstance(target_color, list)):
         try:
@@ -310,28 +314,30 @@ def initialize_or_restore_sliders2(page_init, current_page):
         session['slider_blur'] = default_blur
         session.modified = True
         return default_min_size, default_simplify, default_blur
-    
+
 @callback(
     Output(component_id='threshold-image2', component_property='figure'),
     Output('slider-geo-store', 'data'),
-    Input('threshold-image2', 'id'),
-    Input('dropdown-selection-store', 'data'),
-    Input('min-size_slider', 'value'),
-    Input('simplify_slider', 'value'),
-    Input('blur_slider', 'value'),
-    State('inner-tab-store2', 'data'),
-    State('current-page-store', 'data'),
+    Input('threshold-image2', 'id'),            # Argument 1: canvas_id
+    Input('dropdown-selection-store', 'data'),  # Argument 2: task_selection
+    Input('min-size_slider', 'value'),          # Argument 3: min_size_val
+    Input('simplify_slider', 'value'),         # Argument 4: simplify_val
+    Input('blur_slider', 'value'),             # Argument 5: blur_val
+    State('inner-tab-store2', 'data'),          # Argument 6: current_subpage
+    State('current-page-store', 'data'),        # Argument 7: current_page
     prevent_initial_call=True,
 )
 def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val, blur_val, current_subpage, current_page):
     if current_page != 4 or current_subpage != 'adjust2':
+
         raise PreventUpdate
-    
-    if min_size_val is None: min_size_val = 40 
+
+    if min_size_val is None: min_size_val = 40
     if simplify_val is None: simplify_val = 0.1
-    if blur_val is None: blur_val = 0.5 
+    if blur_val is None: blur_val = 0.5
 
     binary_mask = session.get('current_threshold_image')
+
     if binary_mask is None:
         print("\n[KONSOLE] DEBUG: binary_mask in Session ist absolut leer (None)!")
         raise PreventUpdate
@@ -347,9 +353,9 @@ def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val,
     print("\n=== VISUELLER MASKEN-CHECK IN DER KONSOLE ===")
     print(f"Dimensionen des Bildes: {binary_mask.shape}")
     print(f"Gesamtsumme aktiver Pixel im Array: {np.sum(binary_mask)}")
-    
+
     verkleinerte_maske = binary_mask[::4, ::4]
-    
+
     for zeile in verkleinerte_maske:
         print_zeile = ""
         for pixel in zeile:
@@ -360,10 +366,16 @@ def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val,
         print(print_zeile)
     print("=============================================\n")
 
+    session['current_threshold_image2'] = binary_mask
+
     image_height = binary_mask.shape[0]
     image_width = binary_mask.shape[1]
+
+    print(f"image_height: {image_height}")
+    print(f"image_width: {image_width}")
+
     keys = {'polygons': []}
-    
+
     contours = ski.measure.find_contours(binary_mask.T, 0.5)
     for contour in contours:
         p = shapely.Polygon(contour)
@@ -371,6 +383,7 @@ def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val,
         if p.area > min_area_threshold:
             p2 = p.simplify(simplify_val * 5.0)
             keys['polygons'].append(p2)
+
 
     np_polys = []
     for i, poly in enumerate(keys['polygons']):
@@ -386,18 +399,28 @@ def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val,
             poly = poly[::-1]
         keys['polygons'][i] = poly
 
+    session['polygons'] = keys['polygons']
+
+    for polygon in keys['polygons']:
+        print('polygon ymin: {}, ymax: {}, x min: {}, x max: {}'.format(np.min(polygon[:, 1]), np.max(polygon[:, 1]), np.min(polygon[:, 0]), np.max(polygon[:, 0])))
+
+    #session['nesting_levels'] = nesting_levels
+    palette = qualitative.Safe
+    palette2 = qualitative.Alphabet
+    colors = [palette2[8], palette[0]]
+
     h, w = binary_mask.shape[:2]
     fig = go.Figure()
 
     for polygon in keys['polygons']:
         closed_polygon = np.vstack([polygon, polygon[0]])
         fig.add_trace(go.Scatter(
-            x=closed_polygon[:, 0], 
-            y=closed_polygon[:, 1], 
-            fill="toself",              
-            fillcolor="rgba(0, 123, 255, 0.4)", 
-            line=dict(color="blue", width=3),   
-            mode="lines+markers", 
+            x=closed_polygon[:, 0],
+            y=closed_polygon[:, 1],
+            fill="toself",
+            fillcolor="rgba(0, 123, 255, 0.4)",
+            line=dict(color="blue", width=3),
+            mode="lines+markers",
         ))
 
     match task_selection:
@@ -419,7 +442,7 @@ def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val,
     )
     fig.update_xaxes(showticklabels=False)
     fig.update_yaxes(showticklabels=False)
-    
+
     geo_data = {'min_size': min_size_val, 'simplify': simplify_val, 'blur': blur_val}
     return fig, geo_data
 
