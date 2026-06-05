@@ -80,7 +80,7 @@ layout = html.Div([
                     width=1
                     ),
                 dbc.Col([
-                        dcc.Slider(0, 100, 1, value=40, marks=None, id='min-size_slider'),
+                        dcc.Slider(0, 500, 1, value=40, marks=None, id='min-size_slider'),
                         ],
                     width=7
                     ),
@@ -312,68 +312,74 @@ def initialize_or_restore_sliders2(page_init, current_page):
         session.modified = True
         return default_min_size, default_simplify, default_blur
     
-
 @callback(
     Output(component_id='threshold-image2', component_property='figure'),
     Output('slider-geo-store', 'data'),
-    Input('threshold-image2', 'id'),
-    Input('dropdown-selection-store', 'data'),  # Variable 1
-    Input('min-size_slider', 'value'),          # Variable 2
-    Input('simplify_slider', 'value'),         # Variable 3
-    Input('blur_slider', 'value'),             # Variable 4
-    State('inner-tab-store2', 'data'),          # Variable 5
-    State('current-page-store', 'data'),        # Variable 6
+    Input('threshold-image2', 'id'),            # Argument 1: canvas_id
+    Input('dropdown-selection-store', 'data'),  # Argument 2: task_selection
+    Input('min-size_slider', 'value'),          # Argument 3: min_size_val
+    Input('simplify_slider', 'value'),         # Argument 4: simplify_val
+    Input('blur_slider', 'value'),             # Argument 5: blur_val
+    State('inner-tab-store2', 'data'),          # Argument 6: current_subpage
+    State('current-page-store', 'data'),        # Argument 7: current_page
     prevent_initial_call=True,
 )
-def make_threshold_image2(task_selection, canvas_id, min_size_val, simplify_val, blur_val, current_subpage, current_page):
-    
-    # --- SAFETY BLOCK 1: Richtige Variablenzuordnung ---
-    if current_page != 4:
+def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val, blur_val, current_subpage, current_page):
+    if current_page != 4 or current_subpage != 'adjust2':
         raise PreventUpdate
     
-    print('callback was called')
-    # --- SAFETY BLOCK 2: Fallbacks an dein echtes Layout anpassen ---
-    if min_size_val is None: min_size_val = 40     # Entspricht Layout-Standardwert
+    if min_size_val is None: min_size_val = 40 
     if simplify_val is None: simplify_val = 0.1
-    if blur_val is None: blur_val = 0.5           # Entspricht Layout-Standardwert
+    if blur_val is None: blur_val = 0.5 
 
-    # Versuche das Masken-Bild aus Tab 1 aus der Session zu holen
+    # 1. Maske laden
     binary_mask = session.get('current_threshold_image')
     if binary_mask is None:
+        print("\n[KONSOLE] DEBUG: binary_mask in Session ist absolut leer (None)!")
         raise PreventUpdate
 
-    # Aktuelle Slider-Werte in der Session sichern
-    session['slider_min_size'] = min_size_val
-    session['slider_simplify'] = simplify_val
-    session['slider_blur'] = blur_val
+    # In NumPy-Array umwandeln
+    binary_mask = np.array(binary_mask, dtype=np.float64)
 
-    # Bild verarbeiten (Blur & Masken-Typ-Konvertierung)
+    # 2. Filter anwenden
     if blur_val > 0:
-        binary_mask = ski.filters.gaussian(binary_mask, sigma=blur_val * 5.0)
-        binary_mask = (binary_mask > 0.5).astype(np.int64)
+        smoothed = ski.filters.gaussian(binary_mask, sigma=blur_val * 5.0)
+        binary_mask = (smoothed > 0.3).astype(np.uint8)
     else:
-        binary_mask = binary_mask.astype(np.int64)
+        binary_mask = (binary_mask > 0.5).astype(np.uint8)
 
-    session['current_threshold_image2'] = binary_mask
-    session.modified = True
+    # ==========================================================
+    # VISUELLER KONSOLEN-PRINT DER BINARY MASK
+    # ==========================================================
+    print("\n=== VISUELLER MASKEN-CHECK IN DER KONSOLE ===")
+    print(f"Dimensionen des Bildes: {binary_mask.shape}")
+    print(f"Gesamtsumme aktiver Pixel im Array: {np.sum(binary_mask)}")
+    
+    # Wir überspringen Pixel (Slicing mit ::4), damit das Bild ins Terminal passt
+    verkleinerte_maske = binary_mask[::4, ::4]
+    
+    for zeile in verkleinerte_maske:
+        print_zeile = ""
+        for pixel in zeile:
+            # Wenn der Pixel aktiv (> 0) ist, drucken wir ein '#', sonst ein Leerzeichen
+            if pixel > 0:
+                print_zeile += "#"
+            else:
+                print_zeile += " "
+        print(print_zeile)
+    print("=============================================\n")
 
-    image_width = binary_mask.shape[1]
+    # 3. Konturen extrahieren für die Plotly-Figur
     image_height = binary_mask.shape[0]
+    image_width = binary_mask.shape[1]
+    keys = {'polygons': []}
     
-    keys = {}
-    keys['polygons'] = []
-    
-    # Konturen extrahieren
     contours = ski.measure.find_contours(binary_mask.T, 0.5)
     for contour in contours:
         p = shapely.Polygon(contour)
-        
-        # Berechnung korrigiert: Da min_size_val vom Slider (0-100) kommt,
-        # teilen wir durch 100, um den relativen Schwellenwert zu behalten
-        min_area_threshold = (min_size_val / 100.0) * 100  
+        min_area_threshold = min_size_val * 0.1  # Testweise sehr niedrig angesetzt
         if p.area > min_area_threshold:
-            simplify_tolerance = simplify_val * 5.0  
-            p2 = p.simplify(simplify_tolerance)
+            p2 = p.simplify(simplify_val * 5.0)
             keys['polygons'].append(p2)
 
     np_polys = []
@@ -391,34 +397,19 @@ def make_threshold_image2(task_selection, canvas_id, min_size_val, simplify_val,
         keys['polygons'][i] = poly
 
     h, w = binary_mask.shape[:2]
-
-    # Plotly-Figure bauen
     fig = go.Figure()
 
     for polygon in keys['polygons']:
         closed_polygon = np.vstack([polygon, polygon[0]])
-        x_coords = closed_polygon[:, 0]
-        y_coords = closed_polygon[:, 1]
-        
         fig.add_trace(go.Scatter(
-            x=x_coords, 
-            y=y_coords, 
+            x=closed_polygon[:, 0], 
+            y=closed_polygon[:, 1], 
             fill="toself",              
             fillcolor="rgba(0, 123, 255, 0.4)", 
             line=dict(color="blue", width=3),   
             mode="lines+markers", 
         ))
 
-    fig.update_layout(
-        xaxis=dict(range=[0, w], showgrid=False, mirror=True, showline=True, linecolor='black', scaleanchor="y", scaleratio=1),
-        yaxis=dict(range=[0, h], showgrid=False, mirror=True, showline=True, linecolor='black'),
-        plot_bgcolor="white",
-        width=800,
-        height=int(800 * (h / w)),
-        showlegend=False
-    )
-
-    # Hintergrundbild der Aufgabe zuordnen
     match task_selection:
         case "btn-opt-a": task_src = '/assets/aufgabe0.png'
         case "btn-opt-b": task_src = '/assets/aufgabe1.png'
@@ -427,17 +418,20 @@ def make_threshold_image2(task_selection, canvas_id, min_size_val, simplify_val,
         case _ : task_src = '/assets/aufgabe0.png'
 
     fig.update_layout(
+        xaxis=dict(range=[0, w], showgrid=False, mirror=True, showline=True, linecolor='black', scaleanchor="y", scaleratio=1),
+        yaxis=dict(range=[0, h], showgrid=False, mirror=True, showline=True, linecolor='black'),
+        plot_bgcolor="white",
+        width=800,
+        height=int(800 * (h / w)),
+        showlegend=False,
         images=[dict(source=task_src, xref="paper", yref="paper", x=0.5, y=0.5, sizex=1.5, sizey=1.5, xanchor="center", yanchor="middle")],
-        margin=dict(t=100, b=100, l=50, r=50),
-        coloraxis_showscale=False
+        margin=dict(t=100, b=100, l=50, r=50)
     )
     fig.update_xaxes(showticklabels=False)
     fig.update_yaxes(showticklabels=False)
     
     geo_data = {'min_size': min_size_val, 'simplify': simplify_val, 'blur': blur_val}
-
     return fig, geo_data
-
 
 def polygon_orientation(vertices):
     """
