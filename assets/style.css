@@ -267,15 +267,14 @@ button{
     position: absolute;
     left: 50%;
     transform:translate(-50%, 0);
-    border: #333 solid;
+    /* border: #333 solid; */
 }
 
 #result-box{
     justify-content: center;
 }
 
-#raw-camera{
-    display: block;
+#raw-camera{    
     height: 600px;
     width: 800px;
     margin: 0 auto;

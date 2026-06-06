@@ -4,7 +4,10 @@ Project {
       Scattering {
         FieldComponents = Electric
         Accuracy {
-            Precision = 1e-4
+            Precision = 1e-2
+            FiniteElementDegree {
+              MaximumDegree=6
+            }
         }
       }
     }

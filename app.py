@@ -38,18 +38,18 @@ server.config['SECRET_KEY'] = 'CHANGE_THIS'
 Session(server)
 
 
+
 # --- Layout ---
 app.layout = html.Div(id = 'site', children = [
     dcc.Store(id='raw_image_data'),
-    dcc.Store(id='threshold_color'),
+    dcc.Store(id='threshold_color', data=[255, 255, 255]),
     dcc.Store(id='current-page-store', data = 1),
     dcc.Store(id='inner-tab-store1', data='camera'),
     dcc.Store(id='inner-tab-store2', data='adjust1'),
     dcc.Store(id='blocked_tabs', data=False, storage_type='session'),
-    dcc.Store(id='dropdown-selection-store', data='btn-opt-a'),
+    dcc.Store(id='dropdown-selection-store', data='btn-opt-a'),    
 
-
-    dcc.Store(id='slider-hsv-store', data={'hue': [0.4, 0.5], 'sat': [0.5, 1.0], 'val': [0.1, 1.0]}),
+    dcc.Store(id='slider-hsv-store', data={'hue': [0.4, 0.6], 'sat': [0.05, 1.0], 'val': [0.05, 1.0]}),
     dcc.Store(id='slider-geo-store', data={'min_size': 0.4, 'simplify': 0.1, 'blur': 0.12}),
 
     dcc.Store(id='initial-load-detector', data=False, storage_type='memory'),
@@ -64,8 +64,9 @@ app.layout = html.Div(id = 'site', children = [
             dcc.Tab(label='Create Image', value = '1'),
             dcc.Tab(label='Gallery', value = '2'),
             dcc.Tab(label='Color', value = '3'),
-            dcc.Tab(label='Adjust', value = '4'),
-            dcc.Tab(label='Final', value = '5'),
+            dcc.Tab(label='Threshold', value = '4'),
+            dcc.Tab(label='Polygon', value = '5'),
+            dcc.Tab(label='Simulation', value = '6'),
         ]),
         html.Div(id = 'anchor', children=[
             html.Div(dash.page_container, id = 'content-page'),
@@ -84,7 +85,7 @@ app.layout = html.Div(id = 'site', children = [
 
     html.Div(id = 'navigation', children = [
         html.Button('Previous', id = 'btn-prev', className = 'navBtn', n_clicks = 0, disabled = True),
-        html.Span('Page 1 of 5', id = 'page-indicator'),
+        html.Span('Page 1 of 6', id = 'page-indicator'),
         html.Button('Next', id ='btn-next', className = 'navBtn', n_clicks = 0), 
     ])
 
@@ -114,35 +115,35 @@ def sync_navigation(prev_clicks, next_clicks, tab_value, current_page, blocked_t
     # Standardmäßig wollen wir die URL nicht verändern, außer wir wechseln die Page
     target_path = no_update 
 
-    if triggered_id == 'btn-next' and current_page == 4:
-        if sub_tab2 == 'adjust1':
-            sub_tab2 = 'adjust2'
-            # WICHTIG: Kein Seitenwechsel! Wir bleiben auf Page 4, ändern nur den Store
-            return target_path, current_page, str(current_page), f'Page {current_page} (Teil 2) of 5', False, False, blocked_tabs, sub_tab2
-        else:
-            # Wenn wir schon auf adjust2 waren, gehen wir jetzt hoch auf Page 5
-            current_page += 1
+    # if triggered_id == 'btn-next' and current_page == 4:
+    #     if sub_tab2 == 'adjust1':
+    #         sub_tab2 = 'adjust2'
+    #         # WICHTIG: Kein Seitenwechsel! Wir bleiben auf Page 4, ändern nur den Store
+    #         return target_path, current_page, str(current_page), f'Page {current_page} (Teil 2) of 5', False, False, blocked_tabs, sub_tab2
+    #     else:
+    #         # Wenn wir schon auf adjust2 waren, gehen wir jetzt hoch auf Page 5
+    #         current_page += 1
             
-    elif triggered_id == 'btn-prev' and current_page == 5:
-        current_page -= 1
-        sub_tab2 = 'adjust2'
+    # elif triggered_id == 'btn-prev' and current_page == 5:
+    #     current_page -= 1
+    #     sub_tab2 = 'adjust2'
         
-    elif triggered_id == 'btn-prev' and current_page == 4:
-        if sub_tab2 == 'adjust2':
-            sub_tab2 = 'adjust1'
-            # Auch hier: Nur intern zurückschalten, kein Seiten-Reload
-            return target_path, current_page, str(current_page), f'Page {current_page} (Teil 1) of 5', False, False, blocked_tabs, sub_tab2
-        else:
-            current_page -= 1
+    # elif triggered_id == 'btn-prev' and current_page == 4:
+    #     if sub_tab2 == 'adjust2':
+    #         sub_tab2 = 'adjust1'
+    #         # Auch hier: Nur intern zurückschalten, kein Seiten-Reload
+    #         return target_path, current_page, str(current_page), f'Page {current_page} (Teil 1) of 5', False, False, blocked_tabs, sub_tab2
+    #     else:
+    #         current_page -= 1
 
-    elif triggered_id == 'btn-next' and current_page < 5:
+    if triggered_id == 'btn-next' and current_page < 6:
         current_page += 1
     elif triggered_id == 'btn-prev' and current_page > 1:
         current_page -= 1
     elif triggered_id == 'page-tabs':
         current_page = int(tab_value)
-        if current_page == 4:
-            sub_tab2 = 'adjust1'
+        # if current_page == 4:
+        #     sub_tab2 = 'adjust1'
 
     # Pfad-Zuweisung NUR berechnen, wenn sich die Seitenzahl wirklich geändert hat
     if current_page == 1:
@@ -150,9 +151,9 @@ def sync_navigation(prev_clicks, next_clicks, tab_value, current_page, blocked_t
     else:
         target_path = f'/page_{current_page}'
 
-    indicator_text = f'Page {current_page} of 5'
+    indicator_text = f'Page {current_page} of 6'
     disable_prev = (current_page == 1)
-    disable_next = (current_page == 5)
+    disable_next = (current_page == 6)
  
     if current_page == 2:
         disable_next = True

@@ -4,13 +4,13 @@ Project {
     TimeHarmonic { 
       Scattering { 
         Accuracy {
-          Precision=1e-4          
+          Precision=1e-2          
         }
         PML {
           MaxThicknessSteps = 0
           Compartment {
             Direction = [-X,X]
-            StartThicknessLevel = 2            
+            StartThicknessLevel = 1
           }
         }
       }

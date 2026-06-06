@@ -20,169 +20,199 @@ import shapely
 import jcmwave
 
 dash.register_page(__name__, path = '/page_4')
+app = dash.get_app()
 
 
-layout = html.Div([
-    dcc.Tabs(id = 'adjusting-tabs', value = 'adjust1', children=[
-        dcc.Tab(label = 'Adjust 1', value = 'adjust1', children=[
-            dcc.Loading(
-                type='circle',
-                children=[
-                    dcc.Graph(id = 'threshold-image1', config={'displayModeBar': False}),
-                ]
-            ),
-            dbc.Row([
-                dbc.Col([
-                        html.P('Hue', id='hue_label'),
-                    ],
-                    width=1
-                    ),
-                dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.4, 0.5], marks=None, allowCross=False, id='hue_slider')
-                        ],
-                    width=7
-                    ),
-                ],
-                justify='center'
-            ),
-            dbc.Row([
-                dbc.Col([
-                        html.P('Saturation', id='saturation_label'),
-                    ],
-                    width=1
-                    ),
-                dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.05, 1.0], marks=None, allowCross=False, id='saturation_slider')
-                        ],
-                    width=7
-                    ),
-                ],
-                justify='center'
-            ),
-            dbc.Row([
-                dbc.Col([
-                        html.P(' Value ', id='value_label'),
-                    ],
-                    width=1
-                    ),
-                dbc.Col([
-                        dcc.RangeSlider(0, 1.0, 0.01, value=[0.05, 1.0], marks=None, allowCross=False, id='value_slider')
-                        ],
-                    width=7
-                    ),
-                ],
-                justify='center'
-            ),
-
-        ]),
-        dcc.Tab(label = 'Adjust 2', value = 'adjust2', children=[
-            dcc.Graph(id = 'threshold-image2', config={'displayModeBar': False}),
-            dbc.Row([
-                dbc.Col([
-                        html.P('Min-Size', id='min-size_label'),
-                    ],
-                    width=1
-                    ),
-                dbc.Col([
-                        dcc.Slider(0, 500, 1, value=40, marks=None, id='min-size_slider'),
-                        ],
-                    width=7
-                    ),
-                ],
-                justify='center'
-            ),
-            dbc.Row([
-                dbc.Col([
-                        html.P('Simplify', id='simplify_label'),
-                    ],
-                    width=1
-                    ),
-                dbc.Col([
-                        dcc.Slider(0, 3.0, 0.1, value=0.1, marks=None, id='simplify_slider'),
-                        ],
-                    width=7
-                    ),
-                ],
-                justify='center'
-            ),
-            dbc.Row([
-                dbc.Col([
-                        html.P('Blur', id='blur_label'),
-                    ],
-                    width=1
-                    ),
-                dbc.Col([
-                        dcc.Slider(0, 1.0, 0.01, value=0.5, marks=None, id='blur_slider'),
-                        ],
-                    width=7
-                    ),
-                ],
-                justify='center'
-            ),
-        ]),
-    ])
-])
-
-@callback(
-    Output('adjusting-tabs', 'value'),
-    Input('inner-tab-store2', 'data'),
-    prevent_initial_call=False
+empty_fig = go.Figure()
+empty_fig.update_layout(
+    template=None,
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    xaxis=dict(showgrid=False, visible=False),
+    yaxis=dict(showgrid=False, visible=False),
 )
-def update_sub_tabs_visually(stored_tab):
-    if not stored_tab:
-        return 'adjust1'
-    return stored_tab
+
+layout = html.Div([    
+    dcc.Store(id='previous_threshold_color', data=[255, 255, 255]),
+    dcc.Loading(
+        type='circle',
+        children=[
+            dcc.Graph(id = 'threshold-image1', figure=empty_fig, config={'displayModeBar': False}),
+        ]
+    ),
+    dbc.Row([
+        dbc.Col([
+                html.P('Hue', id='hue_label'),
+            ],
+            width=1
+            ),
+        dbc.Col([            
+            html.Div(
+                style={
+                    "height": "20px",
+                    "borderRadius": "5px",
+                    "margin": "10px",
+                    "background": "linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red)",
+                }
+            ),            
+            ],
+            width=7
+        ),
+        dbc.Col([
+                dcc.RangeSlider(0, 1.0, 0.01, value=[0.4, 0.5], marks=None, allowCross=False, id='hue_slider')
+                ],
+            width=7
+            ),
+        ],
+        justify='center'
+    ),
+    dbc.Row([
+        dbc.Col([
+                html.P('Saturation', id='saturation_label'),
+            ],
+            width=1
+            ),
+        dbc.Col([            
+            html.Div(
+                style={
+                    "height": "20px",
+                    "borderRadius": "5px",
+                    "margin": "10px",
+                    "background": "linear-gradient(to right, gray, white)",
+                }
+            ),            
+            ],
+            width=7
+        ),
+        dbc.Col([
+                dcc.RangeSlider(0, 1.0, 0.01, value=[0.05, 1.0], marks=None, allowCross=False, id='saturation_slider')
+                ],
+            width=7
+            ),
+        ],
+        justify='center'
+    ),
+    dbc.Row([
+        dbc.Col([
+                html.P(' Value ', id='value_label'),
+            ],
+            width=1
+            ),
+        dbc.Col([            
+            html.Div(
+                style={
+                    "height": "20px",
+                    "borderRadius": "5px",
+                    "margin": "10px",
+                     "background": "linear-gradient(to right, black, white)",
+                }
+            ),            
+            ],
+            width=7
+        ),
+        dbc.Col([
+                dcc.RangeSlider(0, 1.0, 0.01, value=[0.05, 1.0], marks=None, allowCross=False, id='value_slider')
+                ],
+            width=7
+            ),
+        ],
+        justify='center'
+    ),
+
+]),
 
 
-@callback(
+@app.callback(
     Output('hue_slider', 'value'),
     Output('saturation_slider', 'value'),
     Output('value_slider', 'value'),
-    Input('threshold_color', 'data'),
-    Input('current-page-store', 'data')
+    #Output("previous_threshold_color", "data"),
+    Input("threshold_color", 'data'),
+    Input('current-page-store', 'data'),
+    State("slider-hsv-store", 'data'),
+    #State("previous_threshold_color", "data"),
+    prevent_initial_call=False,
 )
-def initialize_or_restore_sliders(target_color, current_page):
+def initialize_or_restore_sliders(target_color, current_page, slider_data):
+    print("##############################")
+    print("##############################")    
+    print(f"initialize_or_restore_sliders, current_page: {current_page}")
+    print("##############################")
+    print("##############################")
     if current_page != 4:
         raise PreventUpdate
 
-    active_img_id = session.get('active_image_id', None)
-    last_img_id = session.get('slider_last_image_id', None)
-
+    updated_target = session.get("target_color_updated", False)
     default_hue = [0.4, 0.5]
     default_sat = [0.05, 1.0]
     default_val = [0.05, 1.0]
-
-    if target_color and target_color != 'None' and not any(val is None for val in target_color if isinstance(target_color, list)):
-        try:
+    default_hue = slider_data.get('hue', default_hue)
+    default_sat = slider_data.get('sat', default_sat)
+    default_val = slider_data.get('val', default_val)
+    
+    print("##############################")
+    print(f"target color: {target_color}")
+    print(f"triggering id: {ctx.triggered_id}")
+    print(f"updated_target: {updated_target}")
+    #print(f"prev target color: {prev_target_color}")
+    if (target_color and 
+        target_color != 'None' and
+        not any(val is None for val in target_color if isinstance(target_color, list)) and 
+        #not np.all(target_color==prev_target_color)):
+        updated_target):
+        try:            
+            print("taking color from target color")
             hsv_target_color = ski.color.rgb2hsv(np.array(target_color, dtype=np.uint8))
-            lower_hue_bound = float(np.clip(hsv_target_color[0] - 0.15, 0.0, 1.0))
-            upper_hue_bound = float(np.clip(hsv_target_color[0] + 0.15, 0.0, 1.0))
+            lower_hue_bound = np.round(float(np.clip(hsv_target_color[0] - 0.15, 0.0, 1.0)), 2)
+            upper_hue_bound = np.round(float(np.clip(hsv_target_color[0] + 0.15, 0.0, 1.0)), 2)
             default_hue = [lower_hue_bound, upper_hue_bound]
+
+            lower_saturation_bound = np.round(float(np.clip(hsv_target_color[1] - 0.3, 0.0, 1.0)), 2)
+            upper_saturation_bound = np.round(float(np.clip(hsv_target_color[1] + 0.3, 0.0, 1.0)), 2)
+            default_sat = [lower_saturation_bound, upper_saturation_bound]
+
+            lower_value_bound = np.round(float(np.clip(hsv_target_color[2] - 0.3, 0.0, 1.0)), 2)
+            upper_value_bound = np.round(float(np.clip(hsv_target_color[2] + 0.3, 0.0, 1.0)), 2)
+            default_val = [lower_value_bound, upper_value_bound]            
+            #print(f"hue from target: {default_hue}")
+            prev_target_color = target_color
+            session['target_color_updated'] = False
         except:
-            pass
-
-    if active_img_id == last_img_id and last_img_id is not None:
-        hue = session.get('slider_hue', default_hue)
-        sat = session.get('slider_sat', default_sat)
-        val = session.get('slider_val', default_val)
-        return hue, sat, val
-    else:
-        session['slider_last_image_id'] = active_img_id
-        session['slider_hue'] = default_hue
-        session['slider_sat'] = default_sat
-        session['slider_val'] = default_val
-        session.modified = True
-        return default_hue, default_sat, default_val
+            print("taking color from slider store data")
+            default_hue = slider_data.get('hue')#, default_hue)
+            default_sat = slider_data.get('sat')#, default_sat)
+            default_val = slider_data.get('val')#, default_val)
+    
+    hue = default_hue    
+    print(f"chosen hue: {hue}")
+    sat = default_sat
+    val = default_val
+    #sat = slider_data.get('sat', default_sat)
+    #val = slider_data.get('val', default_val)
+    return hue, sat, val
 
 
+@app.callback(Output("slider-hsv-store", 'data'),
+              Input("hue_slider", "value"),
+              Input("saturation_slider", "value"),
+              Input("value_slider", "value"),              
+              State("slider-hsv-store", 'data'),              
+)
+def store_hue_slider(hue_val, sat_val, val_val, current_data):
+    print(f"calling id: {ctx.triggered_id}")
+    current_data['hue'] = hue_val
+    current_data['sat'] = sat_val
+    current_data['val'] = val_val
+    print(f"setting stored color to: {current_data}")
+    return current_data
 
-@callback(Output(component_id='threshold-image1', component_property= 'figure'),
-              Output('slider-hsv-store', 'data'),
+@app.callback(Output(component_id='threshold-image1', component_property= 'figure'),
+              #Output('slider-hsv-store', 'data'),
               Input('hue_slider', 'value'),
               Input('saturation_slider', 'value'),
               Input('value_slider', 'value'),
-              Input('dropdown-selection-store', 'data'),
-              prevent_initial_call=True,
+              Input('dropdown-selection-store', 'data'),    
+              #prevent_initial_call=True,
               )
 def make_threshold_image(hue_range, saturation_range, value_range, task_selection):
     try:
@@ -190,10 +220,7 @@ def make_threshold_image(hue_range, saturation_range, value_range, task_selectio
     except:
         raise PreventUpdate()
 
-    session['slider_hue'] = hue_range
-    session['slider_sat'] = saturation_range
-    session['slider_val'] = value_range
-    session.modified = True
+    
 
     if(img_data.shape[2] == 4):
         np_data = np.array(img_data[..., :3], dtype=np.uint8)
@@ -211,9 +238,10 @@ def make_threshold_image(hue_range, saturation_range, value_range, task_selectio
     print('HSV LOWER: ', hsv_lower)
     print('HSV HIGHER: ', hsv_higher)
     print('np data shape: {}'.format(np_data.shape))
-    blurred_image = ski.filters.gaussian(np_data, sigma=2.0)
-    print('blurred image shape: {}'.format(blurred_image.shape))
-    hsv_image = ski.color.rgb2hsv(blurred_image)
+    
+    #blurred_image = ski.filters.gaussian(np_data, sigma=2.0)
+    #print('blurred image shape: {}'.format(blurred_image.shape))
+    hsv_image = ski.color.rgb2hsv(np_data)
 
     try:
         binary_mask = cv2.inRange(hsv_image, hsv_lower, hsv_higher)
@@ -279,189 +307,7 @@ def make_threshold_image(hue_range, saturation_range, value_range, task_selectio
     fig.update_xaxes(showticklabels=False)
     fig.update_yaxes(showticklabels=False)
 
-    slider_data = {'hue': hue_range, 'sat': saturation_range, 'val': value_range}
-    return fig, slider_data
+    #slider_data = {'hue': hue_range, 'sat': saturation_range, 'val': value_range}
+    return fig#, slider_data
 
 
-# 2. Adjust
-@callback(
-    Output('min-size_slider', 'value'),
-    Output('simplify_slider', 'value'),
-    Output('blur_slider', 'value'),
-    Input('threshold-image2', 'id'),
-    Input('current-page-store', 'data')
-)
-def initialize_or_restore_sliders2(page_init, current_page):
-    if current_page != 4:
-        raise PreventUpdate
-
-    active_img_id = session.get('active_image_id', None)
-    last_img_id = session.get('slider2_last_image_id', None)
-
-    default_min_size = 0.4
-    default_simplify = 0.1
-    default_blur     = 0.12
-
-    if active_img_id == last_img_id and last_img_id is not None:
-        min_size = session.get('slider_min_size', default_min_size)
-        simplify = session.get('slider_simplify', default_simplify)
-        blur     = session.get('slider_blur', default_blur)
-        return min_size, simplify, blur
-    else:
-        session['slider2_last_image_id'] = active_img_id
-        session['slider_min_size'] = default_min_size
-        session['slider_simplify'] = default_simplify
-        session['slider_blur'] = default_blur
-        session.modified = True
-        return default_min_size, default_simplify, default_blur
-
-@callback(
-    Output(component_id='threshold-image2', component_property='figure'),
-    Output('slider-geo-store', 'data'),
-    Input('threshold-image2', 'id'),            # Argument 1: canvas_id
-    Input('dropdown-selection-store', 'data'),  # Argument 2: task_selection
-    Input('min-size_slider', 'value'),          # Argument 3: min_size_val
-    Input('simplify_slider', 'value'),         # Argument 4: simplify_val
-    Input('blur_slider', 'value'),             # Argument 5: blur_val
-    State('inner-tab-store2', 'data'),          # Argument 6: current_subpage
-    State('current-page-store', 'data'),        # Argument 7: current_page
-    prevent_initial_call=True,
-)
-def make_threshold_image2(canvas_id, task_selection, min_size_val, simplify_val, blur_val, current_subpage, current_page):
-    if current_page != 4 or current_subpage != 'adjust2':
-
-        raise PreventUpdate
-
-    if min_size_val is None: min_size_val = 40
-    if simplify_val is None: simplify_val = 0.1
-    if blur_val is None: blur_val = 0.5
-
-    binary_mask = session.get('current_threshold_image')
-
-    if binary_mask is None:
-        print("\n[KONSOLE] DEBUG: binary_mask in Session ist absolut leer (None)!")
-        raise PreventUpdate
-
-    binary_mask = np.array(binary_mask, dtype=np.float64)
-
-    if blur_val > 0:
-        smoothed = ski.filters.gaussian(binary_mask, sigma=blur_val * 5.0)
-        binary_mask = (smoothed > 0.3).astype(np.uint8)
-    else:
-        binary_mask = (binary_mask > 0.5).astype(np.uint8)
-
-    print("\n=== VISUELLER MASKEN-CHECK IN DER KONSOLE ===")
-    print(f"Dimensionen des Bildes: {binary_mask.shape}")
-    print(f"Gesamtsumme aktiver Pixel im Array: {np.sum(binary_mask)}")
-
-    verkleinerte_maske = binary_mask[::4, ::4]
-
-    for zeile in verkleinerte_maske:
-        print_zeile = ""
-        for pixel in zeile:
-            if pixel > 0:
-                print_zeile += "#"
-            else:
-                print_zeile += " "
-        print(print_zeile)
-    print("=============================================\n")
-
-    session['current_threshold_image2'] = binary_mask
-
-    image_height = binary_mask.shape[0]
-    image_width = binary_mask.shape[1]
-
-    print(f"image_height: {image_height}")
-    print(f"image_width: {image_width}")
-
-    keys = {'polygons': []}
-
-    contours = ski.measure.find_contours(binary_mask.T, 0.5)
-    for contour in contours:
-        p = shapely.Polygon(contour)
-        min_area_threshold = min_size_val * 0.1
-        if p.area > min_area_threshold:
-            p2 = p.simplify(simplify_val * 5.0)
-            keys['polygons'].append(p2)
-
-
-    np_polys = []
-    for i, poly in enumerate(keys['polygons']):
-        c = np.array(poly.exterior.coords)
-        c = c[:-1, :]
-        c[:, 1] = image_height - c[:, 1]
-        np_polys.append(np.ceil(c))
-    keys['polygons'] = np_polys
-
-    for i, poly in enumerate(keys['polygons']):
-        orientation = polygon_orientation(poly)
-        if orientation == "CW":
-            poly = poly[::-1]
-        keys['polygons'][i] = poly
-
-    session['polygons'] = keys['polygons']
-
-    for polygon in keys['polygons']:
-        print('polygon ymin: {}, ymax: {}, x min: {}, x max: {}'.format(np.min(polygon[:, 1]), np.max(polygon[:, 1]), np.min(polygon[:, 0]), np.max(polygon[:, 0])))
-
-    #session['nesting_levels'] = nesting_levels
-    palette = qualitative.Safe
-    palette2 = qualitative.Alphabet
-    colors = [palette2[8], palette[0]]
-
-    h, w = binary_mask.shape[:2]
-    fig = go.Figure()
-
-    for polygon in keys['polygons']:
-        closed_polygon = np.vstack([polygon, polygon[0]])
-        fig.add_trace(go.Scatter(
-            x=closed_polygon[:, 0],
-            y=closed_polygon[:, 1],
-            fill="toself",
-            fillcolor="rgba(0, 123, 255, 0.4)",
-            line=dict(color="blue", width=3),
-            mode="lines+markers",
-        ))
-
-    match task_selection:
-        case "btn-opt-a": task_src = '/assets/aufgabe0.png'
-        case "btn-opt-b": task_src = '/assets/aufgabe1.png'
-        case "btn-opt-c": task_src = '/assets/aufgabe2.png'
-        case "btn-opt-d": task_src = '/assets/aufgabe3.png'
-        case _ : task_src = '/assets/aufgabe0.png'
-
-    fig.update_layout(
-        xaxis=dict(range=[0, w], showgrid=False, mirror=True, showline=True, linecolor='black', scaleanchor="y", scaleratio=1),
-        yaxis=dict(range=[0, h], showgrid=False, mirror=True, showline=True, linecolor='black'),
-        plot_bgcolor="white",
-        width=800,
-        height=int(800 * (h / w)),
-        showlegend=False,
-        images=[dict(source=task_src, xref="paper", yref="paper", x=0.5, y=0.5, sizex=1.5, sizey=1.5, xanchor="center", yanchor="middle")],
-        margin=dict(t=100, b=100, l=50, r=50)
-    )
-    fig.update_xaxes(showticklabels=False)
-    fig.update_yaxes(showticklabels=False)
-
-    geo_data = {'min_size': min_size_val, 'simplify': simplify_val, 'blur': blur_val}
-    return fig, geo_data
-
-def polygon_orientation(vertices):
-    """
-    vertices: list of (x, y) tuples
-    returns: 'CCW', 'CW', or 'DEGENERATE'
-    """
-    area2 = 0
-
-    n = len(vertices)
-    for i in range(n):
-        x1, y1 = vertices[i]
-        x2, y2 = vertices[(i + 1) % n]
-        area2 += x1 * y2 - x2 * y1
-
-    if area2 > 0:
-        return "CCW"
-    elif area2 < 0:
-        return "CW"
-    else:
-        return "DEGENERATE"

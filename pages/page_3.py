@@ -1,5 +1,5 @@
 import dash
-from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH, ALL
+from dash import Dash, html, dcc, Input, Output, State, ctx, MATCH, ALL, no_update
 import dash_bootstrap_components as dbc
 import plotly.express as px
 import plotly.graph_objects as go
@@ -27,49 +27,61 @@ layout = html.Div([
             dcc.Graph(id = 'raw-camera', config={'displayModeBar': False}),
             html.Hr(),
             
-            dbc.Row([
-        
-            dbc.Col([
-                html.Button(
-                    '', id='temporary_color_output',
-                    disabled=True,
-                    style={'width':'50px', 'height':'50px', 'background-color':'white', 'marginRight': '10px'}
-                ),
+            html.Div(
+                [
+                    html.Button(
+                        '', id='temporary_color_output',
+                        disabled=True,
+                        style={'width':'50px', 'height':'50px', 'background-color':'white', 'marginRight': '10px'}
+                    ),                    
+                    html.Button(
+                        '', id='color_output',
+                        disabled=True,
+                        style={'width':'50px', 'height':'50px', 'background-color':'white'}
+                    ),
+                ],
+                style={
+                    "display": "flex",
+                    "justifyContent": "center",
+                    "gap": "10px",
+                    "marginBottom": "15px",
+                },
+            ),            
+            html.Div(
+                [
+                    dbc.InputGroup([
+                        dbc.InputGroupText("Red"),
+                        dcc.Input(id='red_input', type='number', min=0, max=255, step=1, placeholder='255', className='form-control'),
+                    ],
+                    #size="sm"
+                    style={"width": "180px"},
+                    ),                
+                    dbc.InputGroup([
+                        dbc.InputGroupText("Green"),
+                        dcc.Input(id='green_input', type='number', min=0, max=255, step=1, placeholder='255', className='form-control'),
+                    ],
+                    #size="sm"
+                    style={"width": "180px"},
+                    ),                
+                    dbc.InputGroup([
+                        dbc.InputGroupText("Blue"),
+                        dcc.Input(id='blue_input', type='number', min=0, max=255, step=1, placeholder='255', className='form-control'),
+                    ],
+                    #size="sm"
+                    style={"width": "180px"},
+                    ),
                 
-                html.Button(
-                    '', id='color_output',
-                    disabled=True,
-                    style={'width':'50px', 'height':'50px', 'background-color':'white'}
-                ),
-            ], width=3, style={'display': 'flex', 'flexDirection': 'row'}),
+                ],            
+                 style={
+                "display": "flex",
+                "flexDirection": "column",
+                "alignItems": "center",
+                "justifyContent": "center",
+                #"height": "40vh",   # adjust as needed
+                #"gap": "10px",
+            },
+            )
             
-
-            dbc.Col([
-                dbc.Row([
-                    dbc.Col([
-                        dbc.InputGroup([
-                            dbc.InputGroupText("Red"),
-                            dcc.Input(id='red_input', type='number', min=0, max=255, step=1, placeholder='255', className='form-control'),
-                        ], size="sm"),
-                    ], width=4),
-                    
-                    dbc.Col([
-                        dbc.InputGroup([
-                            dbc.InputGroupText("Green"),
-                            dcc.Input(id='green_input', type='number', min=0, max=255, step=1, placeholder='255', className='form-control'),
-                        ], size="sm"),
-                    ], width=4),
-                    
-                    dbc.Col([
-                        dbc.InputGroup([
-                            dbc.InputGroupText("Blue"),
-                            dcc.Input(id='blue_input', type='number', min=0, max=255, step=1, placeholder='255', className='form-control'),
-                        ], size="sm"),
-                    ], width=4),
-                ], className="g-2"),
-            ], width=9),
-            
-        ], align="center"),
 ])
 
 @app.callback(
@@ -81,7 +93,16 @@ def load_selected_image_into_graph(_, task_selection):
     current_raw_image = session.get('current_raw_image', None)
     
     if current_raw_image is None:
-        return go.Figure()
+        fig = go.Figure()
+        fig.update_xaxes(showticklabels=False)
+        fig.update_yaxes(showticklabels=False)
+        fig.update_layout(    
+            plot_bgcolor="white",
+            paper_bgcolor="white",
+        )        
+        fig.update_xaxes(showgrid=False)
+        fig.update_yaxes(showgrid=False)        
+        return fig
         
     fig = px.imshow(current_raw_image)
 
@@ -125,8 +146,8 @@ def make_color(r=0,g=0,b=0):
     color_str = 'rgb({}, {}, {})'.format(r,g,b)
     return color_str
     
-@dash.callback(Output(component_id='temporary_color_output', component_property= 'style'),
-              dash.dependencies.Input('raw-camera', 'hoverData'),
+@app.callback(Output('temporary_color_output','style'),
+              Input('raw-camera', 'hoverData'),
               prevent_initial_call=True)
 def update_temporary_color_state(hover_data):
     if hover_data is None:
@@ -140,13 +161,21 @@ def update_temporary_color_state(hover_data):
         style = {'textAlign':'center', 'width':'50px', 'height':'50px', 'background-color':color}
         return style
 
-@dash.callback(Output(component_id='color_output', component_property= 'style'),
-               Output(component_id='threshold_color', component_property= 'data'),
-               Input(component_id='red_input', component_property= 'value'),
-               Input(component_id='green_input', component_property= 'value'),
-               Input(component_id='blue_input', component_property= 'value'),
+
+
+
+@app.callback(Output('color_output','style'),
+               Output('threshold_color','data'),
+               Input('red_input', 'value'),
+               Input('green_input', 'value'),
+               Input('blue_input', 'value'),               
+               State("threshold_color", "data"),
                prevent_initial_call=True)
-def color_box_update(red, green, blue):
+def color_box_update(red, green, blue, threshold_color):
+    if ctx.triggered_id == "current-page-store":
+        red = threshold_color[0]
+        green = threshold_color[1]
+        blue = threshold_color[2]
     color = make_color(red, green, blue)
     print(color)
     style = {'textAlign':'center', 'width':'50px', 'height':'50px', 'background-color':color}
@@ -154,18 +183,29 @@ def color_box_update(red, green, blue):
     return style, data
 
 
-@dash.callback(dash.dependencies.Output('red_input', 'value'),
-               dash.dependencies.Output('green_input', 'value'),
-               dash.dependencies.Output('blue_input', 'value'),
-               dash.dependencies.Input('raw-camera', 'clickData'),
-               prevent_initial_call=True)
-def update_color_state(click_data):
-    if click_data is None:
+
+@app.callback(Output('red_input', 'value'),
+              Output('green_input', 'value'),
+              Output('blue_input', 'value'),
+              Input('raw-camera', 'clickData'),
+              Input('current-page-store', 'data'),
+              State('threshold_color','data'),
+               prevent_initial_call=False)
+def update_color_state(click_data, current_page, current_color):
+
+    print(f"update_color_state current page: {current_page}")
+    if not current_page == 3:
+        print("raising prevent update")
         raise PreventUpdate()
+    if click_data is None:
+        return current_color
     else:
         #print(hover_data)
         color = click_data['points'][0]['color']
         red = color['0']
         green = color['1']
         blue = color['2']
+        session['target_color_updated'] = True
         return red, green, blue
+
+
